@@ -1,0 +1,63 @@
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+    <head></head>
+    <body th:align="center">
+        <form action="#" th:action="@{/user_menu/setCurrencyPairProperties}" th:object="${currencyPairs}" method="post">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pair Name</th>
+                        <th>Quantity</th>
+                        <th>Max orders count</th>
+                        <th>Percent</th>
+                        <th>
+                            <button type="submit" name="addPair">Add Pair</button>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="rair,pairStat : ${currencyPairs}">
+                        <td th:text="${pairStat.count}">1</td>
+                        <td>
+                            <input type="text" th:field="*{currencyPairs[__${pairStat.index}__].pairName}"/>
+                        </td>
+                        <td>
+                            <input type="text" th:field="*{currencyPairs[__${pairStat.index}__].qty}"/>
+                        </td>
+                        <td>
+                            <input type="number" th:field="*{currencyPairs[__${pairStat.index}__].maxOrdersCount}"/>
+                        </td>
+                        <td>
+                            <input type="number" th:field="*{currencyPairs[__${pairStat.index}__].percent}"/>
+                        </td>
+                        <td>
+                            <button type="submit" name="removePair" th:value="${pairStat.index}">Remove pair</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+
+        <form action="#" th:action="@{/user_menu}" method="post">
+            <table>
+                <tr>
+                    <td>
+                        <input type="text" th:name="key">Input Key</input>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="text" th:name="secret">Input Secret</input>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button type="submit" name="start">Start</button>
+                    </td>
+                    <td>
+                        <button type="submit" name="stop">Stop</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </body>
+</html>
