@@ -22,7 +22,7 @@ import java.util.Properties;
 
 @Configuration
 @EnableTransactionManagement
-@PropertySource("application.yml")
+@PropertySource("application.properties")
 @EnableJpaRepositories(basePackages = "me.ikosarim.cripto_bot.repos")
 public class DatabaseConfig {
 
@@ -71,7 +71,7 @@ public class DatabaseConfig {
     @Bean
     public EntityManagerFactory entityManagerFactory() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
-        em.setPackagesToScan("com.competitions.entities");
+        em.setPackagesToScan("me.ikosarim.cripto_bot");
         em.setDataSource(dataSource());
         em.setJpaProperties(hibernateProperties());
         em.setJpaVendorAdapter(jpaVendorAdapter());
