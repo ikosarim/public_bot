@@ -1,0 +1,36 @@
+#--- Tomcat properties ---
+server:
+  port: 8084
+
+#--- Data Source ---
+spring:
+  datasource:
+
+    # --- H2 Server ---
+    url: jdbc:h2:mem:criptodb
+    driver: org.h2.Driver
+    username: sa
+    password: password
+    dialect: org.hibernate.dialect.H2Dialect
+
+    # --- MySQL server ---
+#    url: com.mysql.cj.jdbc.Driver
+#    driver: jdbc:mysql://localhost:3306/competition_book?useLegacyDatetimeCode=false&serverTimezone=UTC
+#    username: igor
+#    password: start
+#    dialect: org.hibernate.dialect.MySQL57Dialect
+
+  # --- Common Data Source properties ---
+  hibernate:
+    hbm2ddl:
+      auto: create
+    max_fetch_depth: 3
+    jdbc:
+      batch_size: 10
+      fetch_size: 50
+
+# --- HTTP properties ---
+  http:
+    url:
+      trades: http://api.exmo.me/v1/trades
+

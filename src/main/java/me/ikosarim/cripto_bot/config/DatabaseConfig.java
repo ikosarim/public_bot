@@ -22,7 +22,7 @@ import java.util.Properties;
 
 @Configuration
 @EnableTransactionManagement
-@PropertySource("application.properties")
+@PropertySource("application.yml")
 @EnableJpaRepositories(basePackages = "me.ikosarim.cripto_bot.repos")
 public class DatabaseConfig {
 
@@ -53,7 +53,7 @@ public class DatabaseConfig {
     @Bean
     public Properties hibernateProperties() {
         Properties hibernateProp = new Properties();
-        hibernateProp.put("hibernate.dialect", env.getProperty("spring.hibernate.dialect"));
+        hibernateProp.put("hibernate.dialect", env.getProperty("spring.datasource.dialect"));
         hibernateProp.put("hibernate.hbm2ddl.auto", env.getProperty("spring.hibernate.hbm2ddl.auto"));
         hibernateProp.put("hibernate.show_sql", true);
         hibernateProp.put("hibernate.format_sql", true);
