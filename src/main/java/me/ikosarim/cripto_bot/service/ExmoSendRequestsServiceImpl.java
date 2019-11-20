@@ -1,7 +1,6 @@
 package me.ikosarim.cripto_bot.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import me.ikosarim.cripto_bot.json_model.TradeEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
@@ -20,8 +19,12 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
         this.env = env;
     }
 
-    @Autowired
     RestTemplate restTemplate;
+
+    @Autowired
+    public void setRestTemplate(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     @Override
     public JsonNode sendGetTradesRequest(String pairs) {
