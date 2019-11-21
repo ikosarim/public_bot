@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.annotation.Resource;
+
 @Service
 @PropertySource("application.properties")
 public class ExmoSendRequestsServiceImpl implements SendRequestsService {
@@ -19,12 +21,10 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
         this.env = env;
     }
 
-    RestTemplate restTemplate;
-
-    @Autowired
-    public void setRestTemplate(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
+    @Resource(name = "publicRestTemplate")
+    RestTemplate publicRestTemplate;
+    @Resource(name = "privateRestTemplate")
+    RestTemplate privateRestTemplate;
 
     @Override
     public JsonNode sendGetTradesRequest(String pairs) {
@@ -32,7 +32,9 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
                 .queryParam("limit", 15)
                 .queryParam("pair", pairs)
                 .toUriString();
-        restTemplate.getForEntity(uri, TradeEntity.class);
+        JsonNode node = publicRestTemplate.getForObject(uri, JsonNode.class);
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        System.out.println(node.toString());
         return null;
     }
 }

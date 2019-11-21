@@ -3,16 +3,22 @@ package me.ikosarim.cripto_bot.controller;
 import lombok.extern.slf4j.Slf4j;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
+import me.ikosarim.cripto_bot.service.SendRequestsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 @Controller
 @RequestMapping("/user_menu")
 @Slf4j
 public class UserMenuController {
+
+    @Autowired
+    SendRequestsService sendRequestsService;
 
     @GetMapping
     public String getUserMenuPage(Model model) {
@@ -38,7 +44,7 @@ public class UserMenuController {
     public String startWork(@ModelAttribute CurrencyPairList currencyPairList,
                             @RequestParam(value = "key") final String key,
                             @RequestParam(value = "secret") final String secret) {
-        if (currencyPairList.getPairList().isEmpty()){
+        if (currencyPairList.getPairList().isEmpty()) {
             log.warn("Не выбраны валютные пары");
             return "redirect:/user_menu";
         }
@@ -51,6 +57,12 @@ public class UserMenuController {
     public String stopWork() {
         log.warn("Проверяем, что приложение запущено иначе просто редиректим");
         log.warn("Может скрываем форму работы приложения");
+        return "/user_menu";
+    }
+
+    @PostMapping(params = {"sendReq"})
+    public String sendReq() {
+        sendRequestsService.sendGetTradesRequest("BTC_USD,ETH_USD");
         return "/user_menu";
     }
 

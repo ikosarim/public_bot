@@ -17,6 +17,6 @@ public class InitFirstTradeObjects {
                 .stream()
                 .map(TradeObject::getPairName)
                 .collect(joining(","));
-//        sendRequestsService.sendPublicGetTradesRequest(pairsUrl);
+        sendRequestsService.sendGetTradesRequest(pairsUrl);
     }
 }
