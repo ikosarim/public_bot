@@ -32,9 +32,6 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
                 .queryParam("limit", 15)
                 .queryParam("pair", pairs)
                 .toUriString();
-        JsonNode node = publicRestTemplate.getForObject(uri, JsonNode.class);
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        System.out.println(node.toString());
-        return null;
+        return publicRestTemplate.getForObject(uri, JsonNode.class);
     }
 }

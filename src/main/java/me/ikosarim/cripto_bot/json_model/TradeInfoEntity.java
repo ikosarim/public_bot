@@ -1,13 +1,15 @@
 package me.ikosarim.cripto_bot.json_model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.sql.Timestamp;
 
 @Data
-@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
 public class TradeInfoEntity {
 
     @JsonProperty(value = "trade_id")
