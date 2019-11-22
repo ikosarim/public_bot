@@ -3,9 +3,12 @@ package me.ikosarim.cripto_bot.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import me.ikosarim.cripto_bot.containers.CurrencyPairList;
+import me.ikosarim.cripto_bot.containers.TradeObject;
 import me.ikosarim.cripto_bot.json_model.TradeInfoEntity;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,27 +18,31 @@ import static org.springframework.data.util.StreamUtils.createStreamFromIterator
 public class ExmoJSonMappingServiceImpl implements JSonMappingService {
 
     @Override
-    public Map<String, Map<String, TradeInfoEntity>> insertInitDataToTradeInfoMap(JsonNode node) {
+    public Map<String, Map<String, TradeInfoEntity>> insertInitDataToTradeInfoMap(JsonNode node, CurrencyPairList pairList) {
         Map<String, Map<String, TradeInfoEntity>> tradeInfoEntityMap = new HashMap<>();
         ObjectMapper objectMapper = new ObjectMapper();
         node.fields().forEachRemaining(
-                entry -> tradeInfoEntityMap.put(
-                        entry.getKey(),
-                        new HashMap<>() {{
-                            put(
-                                    "buy",
-                                    getTradeInfoEntity(entry.getValue(), objectMapper, "buy")
-                            );
-                            put(
-                                    "sell",
-                                    getTradeInfoEntity(entry.getValue(), objectMapper, "sell")
-                            );
-                        }}
-                ));
+                entry -> {
+                    String name = entry.getKey();
+                    tradeInfoEntityMap.put(
+                            name,
+                            new HashMap<>() {{
+                                put(
+                                        "buy",
+                                        getTradeInfoEntity(entry.getValue(), objectMapper, "buy", pairList, name)
+                                );
+                                put(
+                                        "sell",
+                                        getTradeInfoEntity(entry.getValue(), objectMapper, "sell", pairList, name)
+                                );
+                            }}
+                    );
+                });
         return tradeInfoEntityMap;
     }
 
-    private TradeInfoEntity getTradeInfoEntity(JsonNode node, ObjectMapper objectMapper, String type) {
+    private TradeInfoEntity getTradeInfoEntity(JsonNode node, ObjectMapper objectMapper, String type,
+                                               CurrencyPairList pairList, String pairName) {
         return createStreamFromIterator(
                 node.elements()
         ).map(el -> {
@@ -46,6 +53,47 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
             }
             return null;
         }).filter(tie -> type.equals(tie.getType()))
+                .map(tie -> {
+                    pairList.getPairList()
+                            .stream()
+                            .filter(pair -> pairName.equals(pair.getPairName()))
+                            .map(pair -> TradeObject.builder()
+                                    .pairName(pairName)
+                                    .percent(pair.getPercent())
+                                    .uppestBorder(
+                                            BigDecimal.valueOf(Double.parseDouble(tie.getPrice()))
+                                                    .multiply(
+                                                            pair.getPercent()
+                                                                    .multiply(new BigDecimal(2.0))
+                                                                    .divide(new BigDecimal(100))
+                                                                    .add(new BigDecimal(1.0)))
+                                    ).upperBorder(
+                                            BigDecimal.valueOf(Double.parseDouble(tie.getPrice()))
+                                                    .multiply(
+                                                            pair.getPercent()
+                                                                    .multiply(new BigDecimal(1.0))
+                                                                    .divide(new BigDecimal(100))
+                                                                    .add(new BigDecimal(1.0)))
+                                    ).lowerBorder(
+                                            BigDecimal.valueOf(Double.parseDouble(tie.getPrice()))
+                                                    .multiply(
+                                                            new BigDecimal(1.0).subtract(
+                                                                    pair.getPercent()
+                                                                            .multiply(new BigDecimal(1.0))
+                                                                            .divide(new BigDecimal(100))
+                                                            )
+                                                    )
+                                    ).lowestBorder(
+                                            BigDecimal.valueOf(Double.parseDouble(tie.getPrice()))
+                                                    .multiply(
+                                                            new BigDecimal(1.0).subtract(
+                                                                    pair.getPercent()
+                                                                            .multiply(new BigDecimal(2.0))
+                                                                            .divide(new BigDecimal(100))
+                                                            )
+                                                    )
+                                    ).maxOrdersCount(pair.getMaxOrdersCount())
+                })
                 .findFirst()
                 .orElseThrow();
     }
