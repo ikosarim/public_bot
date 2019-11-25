@@ -20,16 +20,14 @@ public class InitFirstTradeObjects {
     SendRequestsService sendRequestsService;
     @Autowired
     JSonMappingService jSonMappingService;
-    @Autowired
-    Map<String, Map<String, TradeInfoEntity>> tradeInfoEntityMap;
 
-    public Map<String, Map<String, TradeInfoEntity>> init(CurrencyPairList pairList) {
+    public Map<String, Map<String, TradeObject>> initTradeObjectMap(CurrencyPairList pairList) {
         String pairsUrl = pairList.getPairList()
                 .stream()
                 .map(TradeObject::getPairName)
                 .map(pairName -> pairName + "_USD")
                 .collect(joining(","));
         JsonNode node = sendRequestsService.sendGetTradesRequest(pairsUrl);
-        return jSonMappingService.insertInitDataToTradeInfoMap(node);
+        return jSonMappingService.insertInitDataToTradeInfoMap(node, pairList);
     }
 }

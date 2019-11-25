@@ -50,7 +50,7 @@ public class UserMenuController {
             log.warn("Не выбраны валютные пары");
             return "redirect:/user_menu";
         }
-        initFirstTradeObjects.init(currencyPairList);
+        initFirstTradeObjects.initTradeObjectMap(currencyPairList);
         log.debug("Дергаем метод логики работы приложения");
         log.debug("Возможно добавляем редирект на страницу отображения или рисуем какой-нибудь картинку работы... или нет");
         return "/user_menu";

@@ -2,8 +2,6 @@ package me.ikosarim.cripto_bot.containers;
 
 import lombok.*;
 
-import java.math.BigDecimal;
-
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -13,19 +11,18 @@ public class TradeObject {
 
     private String pairName;
 
-    private BigDecimal percent;
-    private BigDecimal uppestBorder;
-    private BigDecimal upperBorder;
-    private BigDecimal lowerBorder;
-    private BigDecimal lowestBorder;
+    private Double percent;
+    private Double uppestBorder;
+    private Double upperBorder;
+    private Double lowerBorder;
+    private Double lowestBorder;
 
     private Integer maxOrdersCount;
 
     private String quantity;
-    private BigDecimal orderBookDelta;
+    private Double orderBookDelta;
 
-    private BigDecimal tradeBuyPrice;
-    private BigDecimal tradeSellPrice;
-    private BigDecimal orderBookAskPrice;
-    private BigDecimal orderBookBidPrice;
+    private Double tradePrice;
+    private Double orderBookAskPrice;
+    private Double orderBookBidPrice;
 }
