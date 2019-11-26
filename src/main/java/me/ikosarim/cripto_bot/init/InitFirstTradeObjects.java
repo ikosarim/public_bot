@@ -8,6 +8,8 @@ import me.ikosarim.cripto_bot.service.SendRequestsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 import static java.util.stream.Collectors.joining;
 
 @Component
@@ -17,6 +19,8 @@ public class InitFirstTradeObjects {
     SendRequestsService sendRequestsService;
     @Autowired
     JSonMappingService jSonMappingService;
+    @Autowired
+    Map<String, String> userPrivateInfoMap;
 
     public void initTradeObjectMap(CurrencyPairList pairList) {
         for (TradeObject tradeObject : pairList.getPairList()) {
@@ -32,5 +36,10 @@ public class InitFirstTradeObjects {
         jSonMappingService.insertInitDataToTradeInMap(node, pairList);
         node = sendRequestsService.sendGetPairSettingsRequest();
         jSonMappingService.insertOrderBookDeltaInMap(node);
+    }
+
+    public void initUserPrivateInfoMap(String key, String secret) {
+        userPrivateInfoMap.put("sey", key);
+        userPrivateInfoMap.put("secret", secret);
     }
 }

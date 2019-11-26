@@ -7,4 +7,6 @@ public interface SendRequestsService {
     JsonNode sendGetTradesRequest(String pairs);
 
     JsonNode sendGetPairSettingsRequest();
+
+    JsonNode sendPostUserInfoRequest();
 }

@@ -41,4 +41,13 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
                 .toUriString();
         return publicRestTemplate.getForObject(uri, JsonNode.class);
     }
+
+    @Override
+    public JsonNode sendPostUserInfoRequest() {
+        // TODO: 27.11.2019 generate sign and add to request headers
+        String uri = UriComponentsBuilder.fromUriString(env.getProperty("spring.http.url.user.info"))
+                .toUriString();
+
+        return null;
+    }
 }
