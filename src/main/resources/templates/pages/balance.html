@@ -1,0 +1,21 @@
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body th:align="center">
+
+<form action="#" th:action="@{balance}" th:object="${currencyList}" method="get">
+
+    <table>
+        <thead>
+        <p>Баланс</p>
+        </thead>
+        <tbody>
+        <tr th:each="currency,currencyIndex : *{currencyList}">
+            <td th:text="${currencyIndex.count}">1</td>
+            <td>
+                
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+</body>
