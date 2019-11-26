@@ -34,4 +34,11 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
                 .toUriString();
         return publicRestTemplate.getForObject(uri, JsonNode.class);
     }
+
+    @Override
+    public JsonNode sendGetPairSettingsRequest() {
+        String uri = UriComponentsBuilder.fromUriString(env.getProperty("spring.http.url.pair.settings"))
+                .toUriString();
+        return publicRestTemplate.getForObject(uri, JsonNode.class);
+    }
 }

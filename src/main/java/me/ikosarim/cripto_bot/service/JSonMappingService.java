@@ -8,5 +8,7 @@ import java.util.Map;
 
 public interface JSonMappingService {
 
-    Map<String, Map<String, TradeObject>> insertInitDataToTradeInfoMap(JsonNode node, CurrencyPairList pairList);
+    Map<String, Map<String, TradeObject>> insertInitDataToTradeInMap(JsonNode node, CurrencyPairList pairList);
+
+    Map<String, Map<String, TradeObject>> insertOrderBookDeltaInMap(JsonNode node);
 }

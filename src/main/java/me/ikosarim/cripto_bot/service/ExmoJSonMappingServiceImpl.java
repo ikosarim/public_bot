@@ -22,7 +22,7 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
     Map<String, Map<String, TradeObject>> tradeInfoEntityMap;
 
     @Override
-    public Map<String, Map<String, TradeObject>> insertInitDataToTradeInfoMap(JsonNode node, CurrencyPairList pairList) {
+    public Map<String, Map<String, TradeObject>> insertInitDataToTradeInMap(JsonNode node, CurrencyPairList pairList) {
         ObjectMapper objectMapper = new ObjectMapper();
         node.fields().forEachRemaining(
                 entry -> {
@@ -42,6 +42,29 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
                     );
                 });
         return tradeInfoEntityMap;
+    }
+
+    @Override
+    public Map<String, Map<String, TradeObject>> insertOrderBookDeltaInMap(JsonNode node) {
+        tradeInfoEntityMap.entrySet().forEach(
+                entry -> node.fields().forEachRemaining(
+                        nodeEntry -> {
+                            if (entry.getKey().equals(nodeEntry.getKey())) {
+                                setOrderBookDelta(entry, nodeEntry, "buy");
+                                setOrderBookDelta(entry, nodeEntry, "sell");
+                            }
+                        }
+                )
+        );
+        return tradeInfoEntityMap;
+    }
+
+    private void setOrderBookDelta(Map.Entry<String, Map<String, TradeObject>> entry,
+                                   Map.Entry<String, JsonNode> nodeEntry, String buy) {
+        entry.getValue().get(buy)
+                .setOrderBookDelta(parseDouble(nodeEntry.getValue()
+                        .get("min_quantity")
+                        .textValue()));
     }
 
     private TradeObject getTradeInfoEntity(JsonNode node, ObjectMapper objectMapper, String type,
@@ -74,7 +97,6 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
                 .lowestBorder(createLowBorder(tie, pair, 2.0))
                 .maxOrdersCount(pair.getMaxOrdersCount())
                 .quantity(pair.getQuantity())
-                .orderBookDelta(pair.getOrderBookDelta())
                 .tradePrice(parseDouble(tie.getPrice()))
                 .build();
     }
