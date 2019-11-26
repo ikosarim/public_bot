@@ -22,7 +22,7 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
     Map<String, Map<String, TradeObject>> tradeInfoEntityMap;
 
     @Override
-    public Map<String, Map<String, TradeObject>> insertInitDataToTradeInMap(JsonNode node, CurrencyPairList pairList) {
+    public void insertInitDataToTradeInMap(JsonNode node, CurrencyPairList pairList) {
         ObjectMapper objectMapper = new ObjectMapper();
         node.fields().forEachRemaining(
                 entry -> {
@@ -41,11 +41,10 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
                             }}
                     );
                 });
-        return tradeInfoEntityMap;
     }
 
     @Override
-    public Map<String, Map<String, TradeObject>> insertOrderBookDeltaInMap(JsonNode node) {
+    public void insertOrderBookDeltaInMap(JsonNode node) {
         tradeInfoEntityMap.entrySet().forEach(
                 entry -> node.fields().forEachRemaining(
                         nodeEntry -> {
@@ -56,7 +55,6 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
                         }
                 )
         );
-        return tradeInfoEntityMap;
     }
 
     private void setOrderBookDelta(Map.Entry<String, Map<String, TradeObject>> entry,
