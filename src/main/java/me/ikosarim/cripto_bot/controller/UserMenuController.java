@@ -63,11 +63,5 @@ public class UserMenuController {
         return "/user_menu";
     }
 
-    @PostMapping(params = {"sendReq"})
-    public String sendReq() {
-        sendRequestsService.sendGetTradesRequest("BTC_USD,ETH_USD");
-        return "/user_menu";
-    }
-
     // TODO: 19.11.2019 Добавить валидации
 }

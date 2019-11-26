@@ -57,22 +57,26 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
                 .map(tie -> pairList.getPairList()
                         .stream()
                         .filter(pair -> pairName.equals(pair.getPairName()))
-                        .map(pair -> TradeObject.builder()
-                                .pairName(pairName)
-                                .percent(pair.getPercent())
-                                .uppestBorder(createUpBorder(tie, pair, 2.0))
-                                .upperBorder(createUpBorder(tie, pair, 1.0))
-                                .lowerBorder(createLowBorder(tie, pair, 1.0))
-                                .lowestBorder(createLowBorder(tie, pair, 2.0))
-                                .maxOrdersCount(pair.getMaxOrdersCount())
-                                .quantity(pair.getQuantity())
-                                .orderBookDelta(pair.getOrderBookDelta())
-                                .tradePrice(parseDouble(tie.getPrice()))
-                                .build())
+                        .map(pair -> buildFinishTradeObject(pairName, tie, pair))
                         .findFirst()
                         .orElseThrow())
                 .findFirst()
                 .orElseThrow();
+    }
+
+    private TradeObject buildFinishTradeObject(String pairName, TradeInfoEntity tie, TradeObject pair) {
+        return TradeObject.builder()
+                .pairName(pairName)
+                .percent(pair.getPercent())
+                .uppestBorder(createUpBorder(tie, pair, 2.0))
+                .upperBorder(createUpBorder(tie, pair, 1.0))
+                .lowerBorder(createLowBorder(tie, pair, 1.0))
+                .lowestBorder(createLowBorder(tie, pair, 2.0))
+                .maxOrdersCount(pair.getMaxOrdersCount())
+                .quantity(pair.getQuantity())
+                .orderBookDelta(pair.getOrderBookDelta())
+                .tradePrice(parseDouble(tie.getPrice()))
+                .build();
     }
 
     private Double createLowBorder(TradeInfoEntity tie, TradeObject pair, double v) {

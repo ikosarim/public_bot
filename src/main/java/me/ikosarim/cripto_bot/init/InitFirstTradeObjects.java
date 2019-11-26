@@ -22,10 +22,14 @@ public class InitFirstTradeObjects {
     JSonMappingService jSonMappingService;
 
     public Map<String, Map<String, TradeObject>> initTradeObjectMap(CurrencyPairList pairList) {
+        for (TradeObject tradeObject : pairList.getPairList()) {
+            String pairName = tradeObject.getPairName();
+            pairName += "_USD";
+            tradeObject.setPairName(pairName);
+        }
         String pairsUrl = pairList.getPairList()
                 .stream()
                 .map(TradeObject::getPairName)
-                .map(pairName -> pairName + "_USD")
                 .collect(joining(","));
         JsonNode node = sendRequestsService.sendGetTradesRequest(pairsUrl);
         return jSonMappingService.insertInitDataToTradeInfoMap(node, pairList);
