@@ -2,7 +2,7 @@ package me.ikosarim.cripto_bot.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
-import me.ikosarim.cripto_bot.json_model.CurrencyPair;
+import me.ikosarim.cripto_bot.containers.TradeObject;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +23,7 @@ public class UserMenuController {
     @PostMapping(params = {"addPair"})
     public String addCurrencyPair(final CurrencyPairList pairList) {
         pairList.getPairList()
-                .add(new CurrencyPair());
+                .add(new TradeObject());
         return "/user_menu";
     }
 
@@ -38,7 +38,7 @@ public class UserMenuController {
     public String startWork(@ModelAttribute CurrencyPairList currencyPairList,
                             @RequestParam(value = "key") final String key,
                             @RequestParam(value = "secret") final String secret) {
-        if (currencyPairList.getPairList().isEmpty()){
+        if (currencyPairList.getPairList().isEmpty()) {
             log.warn("Не выбраны валютные пары");
             return "redirect:/user_menu";
         }
