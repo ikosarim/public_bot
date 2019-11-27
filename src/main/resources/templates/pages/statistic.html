@@ -1,0 +1,38 @@
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body th:align="center">
+
+    <form action="#" th:action="@{/statistic}" th:object="${userInfoEntity}" method="get">
+
+        <table>
+            <thead>
+                <p>Баланс</p>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Идентификационный номер</td>
+                </tr>
+                <tr>
+                    <td th:text="${userInfoEntity.uid}">uid</td>
+                </tr>
+                <tr>
+                    <td>Баланс</td>
+                </tr>
+                <tr th:each="balance : ${userInfoEntity.balances}">
+                    <td th:text="${balance.key}">balancekey</td>
+                    <td th:text="${balance.value}">balancevalue</td>
+                </tr>
+                <tr>
+                    <td>В ордерах</td>
+                </tr>
+                <tr th:each="reserve : ${userInfoEntity.reserved}">
+                    <td th:text="${reserve.key}">reservekey</td>
+                    <td th:text="${reserve.value}">reservevalue</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button id="refresh" type="submit">Refresh</button>
+        <button id="stop" name="stop">Stop</button>
+    </form>
+</body>

@@ -3,16 +3,21 @@ package me.ikosarim.cripto_bot.controller;
 import lombok.extern.slf4j.Slf4j;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/user_menu")
 @Slf4j
 public class UserMenuController {
+
+    @Autowired
+    Map<String, String> userPrivateInfoMap;
 
     @GetMapping
     public String getUserMenuPage(Model model) {
@@ -42,16 +47,15 @@ public class UserMenuController {
             log.warn("Не выбраны валютные пары");
             return "redirect:/user_menu";
         }
+        initUserPrivateInfoMap(key, secret);
         log.debug("Дергаем метод логики работы приложения");
         log.debug("Возможно добавляем редирект на страницу отображения или рисуем какой-нибудь картинку работы... или нет");
-        return "/user_menu";
+        return "redirect:/statistic";
     }
 
-    @PostMapping(params = {"stop"})
-    public String stopWork() {
-        log.warn("Проверяем, что приложение запущено иначе просто редиректим");
-        log.warn("Может скрываем форму работы приложения");
-        return "/user_menu";
+    private void initUserPrivateInfoMap(String key, String secret) {
+        userPrivateInfoMap.put("sey", key);
+        userPrivateInfoMap.put("secret", secret);
     }
 
     // TODO: 19.11.2019 Добавить валидации

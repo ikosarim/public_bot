@@ -1,18 +1,30 @@
 package me.ikosarim.cripto_bot.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import me.ikosarim.cripto_bot.json_model.UserInfoEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @PropertySource("application.properties")
 public class ExmoSendRequestsServiceImpl implements SendRequestsService {
+
+    @Autowired
+    Map<String, String> userPrivateInfoMap;
+
+    @Autowired
+    CreateSignService createSignService;
 
     private Environment env;
 
@@ -43,11 +55,31 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
     }
 
     @Override
-    public JsonNode sendPostUserInfoRequest() {
-        // TODO: 27.11.2019 generate sign and add to request headers
-        String uri = UriComponentsBuilder.fromUriString(env.getProperty("spring.http.url.user.info"))
-                .toUriString();
+    public UserInfoEntity sendPostUserInfoRequest() {
+        String url = env.getProperty("spring.http.url.user.info");
+        String method = url.substring(url.lastIndexOf("/") + 1);
 
-        return null;
+        HttpEntity requestEntity = new HttpEntity(createPostRequestHeaders(method, null));
+
+        ResponseEntity<UserInfoEntity> response = privateRestTemplate.postForEntity(url, requestEntity, UserInfoEntity.class);
+
+        return response.getBody();
+    }
+
+    private HttpHeaders createPostRequestHeaders(String method, Map<String, Object> arguments) {
+        if (arguments == null) {
+            arguments = new HashMap<>();
+        }
+
+        String nonceNum = "" + System.nanoTime();
+        String nonceName = "nonce";
+        arguments.put(nonceName, nonceNum);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Content-type", "application/x-www-form-urlencoded");
+        httpHeaders.add("Key", userPrivateInfoMap.get("key"));
+        String sign = createSignService.createSign(method, userPrivateInfoMap.get("secret"), arguments);
+        httpHeaders.add("Sign", sign);
+        return httpHeaders;
     }
 }

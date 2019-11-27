@@ -1,6 +1,7 @@
 package me.ikosarim.cripto_bot.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import me.ikosarim.cripto_bot.json_model.UserInfoEntity;
 
 public interface SendRequestsService {
 
@@ -8,5 +9,5 @@ public interface SendRequestsService {
 
     JsonNode sendGetPairSettingsRequest();
 
-    JsonNode sendPostUserInfoRequest();
+    UserInfoEntity sendPostUserInfoRequest();
 }

@@ -13,7 +13,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
-import static java.lang.Integer.*;
+import static java.lang.Integer.parseInt;
 
 @Configuration
 public class RestConfig {
