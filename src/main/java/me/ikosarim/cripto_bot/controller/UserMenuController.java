@@ -54,7 +54,7 @@ public class UserMenuController {
     }
 
     private void initUserPrivateInfoMap(String key, String secret) {
-        userPrivateInfoMap.put("sey", key);
+        userPrivateInfoMap.put("key", key);
         userPrivateInfoMap.put("secret", secret);
     }
 
