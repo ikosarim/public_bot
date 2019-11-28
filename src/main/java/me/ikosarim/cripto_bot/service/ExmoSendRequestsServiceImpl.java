@@ -10,10 +10,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,7 +64,13 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
         String method = url.substring(url.lastIndexOf("/") + 1);
 
         Map<String, Object> arguments = addNonceToRequest(null);
-        HttpEntity requestEntity = new HttpEntity(arguments, createPostRequestHeaders(method, arguments));
+
+        MultiValueMap<String, Object> multiValueMapArguments = new LinkedMultiValueMap<>();
+        arguments.forEach((key, value) -> multiValueMapArguments.put(key, new ArrayList<>() {{
+            add(value);
+        }}));
+
+        HttpEntity requestEntity = new HttpEntity(multiValueMapArguments, createPostRequestHeaders(method, arguments));
 
         ResponseEntity<UserInfoEntity> response = privateRestTemplate.postForEntity(url, requestEntity, UserInfoEntity.class);
 
@@ -83,7 +92,6 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
     private HttpHeaders createPostRequestHeaders(String method, Map<String, Object> arguments) {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-//        httpHeaders.add("Content-type", "application/x-www-form-urlencoded");
         httpHeaders.add("Key", userPrivateInfoMap.get("key"));
         String sign = createSignService.createSign(method, userPrivateInfoMap.get("secret"), arguments);
         httpHeaders.add("Sign", sign);

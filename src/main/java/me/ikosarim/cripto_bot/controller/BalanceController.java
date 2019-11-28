@@ -28,7 +28,7 @@ public class BalanceController {
 
     @GetMapping(params = {"stop"})
     public String stopWork() {
-        return "/user_menu";
+        return "redirect:/user_menu";
     }
 
     private UserInfoEntity clearStatistic(UserInfoEntity userInfoEntity) {
