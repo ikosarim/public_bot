@@ -2,10 +2,14 @@ package me.ikosarim.cripto_bot.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
+import me.ikosarim.cripto_bot.containers.TradeObject;
+import me.ikosarim.cripto_bot.json_model.PairSettingEntity;
+
+import java.util.Map;
 
 public interface JSonMappingService {
 
-    void insertInitDataToTradeInMap(JsonNode node, CurrencyPairList pairList);
+    Map<String, TradeObject> returnInitDataToTradeInMap(JsonNode node, CurrencyPairList pairList);
 
-    void insertOrderBookDeltaInMap(JsonNode node);
+    Map<String, PairSettingEntity> convertToPairSettingEntity(JsonNode node);
 }

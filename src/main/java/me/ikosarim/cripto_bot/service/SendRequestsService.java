@@ -1,13 +1,17 @@
 package me.ikosarim.cripto_bot.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import me.ikosarim.cripto_bot.containers.CurrencyPairList;
+import me.ikosarim.cripto_bot.containers.TradeObject;
+import me.ikosarim.cripto_bot.json_model.PairSettingEntity;
 import me.ikosarim.cripto_bot.json_model.UserInfoEntity;
+
+import java.util.Map;
 
 public interface SendRequestsService {
 
-    JsonNode sendGetTradesRequest(String pairs);
+    Map<String, TradeObject> sendInitGetTradesRequest(String pairs, CurrencyPairList pairList);
 
-    JsonNode sendGetPairSettingsRequest();
+    Map<String, PairSettingEntity> sendGetPairSettingsRequest();
 
     UserInfoEntity sendPostUserInfoRequest();
 }

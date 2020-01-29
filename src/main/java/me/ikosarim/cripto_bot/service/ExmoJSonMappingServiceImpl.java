@@ -5,105 +5,91 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
+import me.ikosarim.cripto_bot.json_model.PairSettingEntity;
 import me.ikosarim.cripto_bot.json_model.TradeInfoEntity;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static java.lang.Double.parseDouble;
+import static java.util.stream.Collectors.toList;
 import static org.springframework.data.util.StreamUtils.createStreamFromIterator;
 
 @Service
 public class ExmoJSonMappingServiceImpl implements JSonMappingService {
 
-    @Autowired
-    Map<String, Map<String, TradeObject>> tradeInfoEntityMap;
-
     @Override
-    public void insertInitDataToTradeInMap(JsonNode node, CurrencyPairList pairList) {
+    public Map<String, TradeObject> returnInitDataToTradeInMap(JsonNode node, CurrencyPairList pairList) {
         ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, TradeObject> tradeObjectMap = new HashMap<>();
         node.fields().forEachRemaining(
                 entry -> {
                     String name = entry.getKey();
-                    tradeInfoEntityMap.put(
+                    tradeObjectMap.put(
                             name,
-                            new HashMap<>() {{
-                                put(
-                                        "buy",
-                                        getTradeInfoEntity(entry.getValue(), objectMapper, "buy", pairList, name)
-                                );
-                                put(
-                                        "sell",
-                                        getTradeInfoEntity(entry.getValue(), objectMapper, "sell", pairList, name)
-                                );
-                            }}
+                            getTradeObject(entry.getValue(), objectMapper, pairList, name)
                     );
                 });
+        return tradeObjectMap;
     }
 
-    @Override
-    public void insertOrderBookDeltaInMap(JsonNode node) {
-        tradeInfoEntityMap.entrySet().forEach(
-                entry -> node.fields().forEachRemaining(
-                        nodeEntry -> {
-                            if (entry.getKey().equals(nodeEntry.getKey())) {
-                                setOrderBookDelta(entry, nodeEntry, "buy");
-                                setOrderBookDelta(entry, nodeEntry, "sell");
-                            }
-                        }
-                )
-        );
-    }
-
-    private void setOrderBookDelta(Map.Entry<String, Map<String, TradeObject>> entry,
-                                   Map.Entry<String, JsonNode> nodeEntry, String buy) {
-        entry.getValue().get(buy)
-                .setOrderBookDelta(parseDouble(nodeEntry.getValue()
-                        .get("min_quantity")
-                        .textValue()));
-    }
-
-    private TradeObject getTradeInfoEntity(JsonNode node, ObjectMapper objectMapper, String type,
-                                           CurrencyPairList pairList, String pairName) {
-        return createStreamFromIterator(node.elements()).map(el -> {
+    private TradeObject getTradeObject(JsonNode node, ObjectMapper objectMapper, CurrencyPairList pairList, String name){
+        List<TradeInfoEntity> tradeInfoEntityList = createStreamFromIterator(node.elements()).map(el -> {
             try {
                 return objectMapper.treeToValue(el, TradeInfoEntity.class);
-            } catch (JsonProcessingException e) {
+            } catch (JsonProcessingException e){
                 e.printStackTrace();
             }
             return null;
-        }).filter(tie -> type.equals(tie.getType()))
-                .map(tie -> pairList.getPairList()
-                        .stream()
-                        .filter(pair -> pairName.equals(pair.getPairName()))
-                        .map(pair -> buildFinishTradeObject(pairName, tie, pair))
-                        .findFirst()
-                        .orElseThrow())
+        }).collect(toList());
+        TradeInfoEntity buyTradeInfo = getFirstTradeInfoObject(tradeInfoEntityList, "buy");
+        TradeInfoEntity sellTradeInfo = getFirstTradeInfoObject(tradeInfoEntityList, "sell");
+        TradeObject tradeObject = pairList.getPairList()
+                .stream()
+                .filter(pair -> name.equals(pair.getPairName()))
+                .findFirst()
+                .orElseThrow();
+        tradeObject.setTradeBuyPrice(parseDouble(buyTradeInfo.getPrice()));
+        tradeObject.setTradeSellPrice(parseDouble(sellTradeInfo.getPrice()));
+        tradeObject.setLowestBorder(createLowBorder(tradeObject, 2.0));
+        tradeObject.setLowerBorder(createLowBorder(tradeObject, 1.0));
+        tradeObject.setUpperBorder(createUpBorder(tradeObject, 1.0));
+        tradeObject.setUppestBorder(createUpBorder(tradeObject, 2.0));
+        return tradeObject;
+    }
+
+    private TradeInfoEntity getFirstTradeInfoObject(List<TradeInfoEntity> tradeInfoEntityList, String buy) {
+        return tradeInfoEntityList.stream()
+                .filter(tie -> buy.equals(tie.getType()))
                 .findFirst()
                 .orElseThrow();
     }
 
-    private TradeObject buildFinishTradeObject(String pairName, TradeInfoEntity tie, TradeObject pair) {
-        return TradeObject.builder()
-                .pairName(pairName)
-                .percent(pair.getPercent())
-                .uppestBorder(createUpBorder(tie, pair, 2.0))
-                .upperBorder(createUpBorder(tie, pair, 1.0))
-                .lowerBorder(createLowBorder(tie, pair, 1.0))
-                .lowestBorder(createLowBorder(tie, pair, 2.0))
-                .maxOrdersCount(pair.getMaxOrdersCount())
-                .quantity(pair.getQuantity())
-                .tradePrice(parseDouble(tie.getPrice()))
-                .build();
+    @Override
+    public Map<String, PairSettingEntity> convertToPairSettingEntity(JsonNode node) {
+        Map<String, PairSettingEntity> pairSettingEntityMap = new HashMap<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+        node.fields().forEachRemaining(entry -> {
+            String pairName = entry.getKey();
+            try {
+                pairSettingEntityMap.put(
+                        pairName,
+                        objectMapper.treeToValue(entry.getValue(), PairSettingEntity.class)
+                );
+            } catch (JsonProcessingException e){
+                e.printStackTrace();
+            }
+        });
+        return pairSettingEntityMap;
     }
 
-    private Double createLowBorder(TradeInfoEntity tie, TradeObject pair, double v) {
-        return parseDouble(tie.getPrice()) * (1.0 - pair.getPercent() * v / 100);
+    private Double createLowBorder(TradeObject tradeObject, double v) {
+        return ((tradeObject.getTradeBuyPrice() + tradeObject.getTradeSellPrice()) / 2) * (1.0 - tradeObject.getPercent() * v / 100);
     }
 
-    private Double createUpBorder(TradeInfoEntity tie, TradeObject pair, double v) {
-        return parseDouble(tie.getPrice()) * (1.0 + pair.getPercent() * v / 100);
+    private Double createUpBorder(TradeObject tradeObject, double v) {
+        return ((tradeObject.getTradeBuyPrice() + tradeObject.getTradeSellPrice()) / 2) * (1.0 + tradeObject.getPercent() * v / 100);
     }
 }

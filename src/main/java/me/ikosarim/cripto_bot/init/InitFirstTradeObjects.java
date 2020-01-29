@@ -1,22 +1,26 @@
 package me.ikosarim.cripto_bot.init;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
-import me.ikosarim.cripto_bot.service.JSonMappingService;
+import me.ikosarim.cripto_bot.json_model.PairSettingEntity;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
+import static java.lang.Double.parseDouble;
 import static java.util.stream.Collectors.joining;
 
 @Component
 public class InitFirstTradeObjects {
 
     @Autowired
-    SendRequestsService sendRequestsService;
+    private SendRequestsService sendRequestsService;
     @Autowired
-    JSonMappingService jSonMappingService;
+    private Map<String, TradeObject> tradeObjectMap;
+    @Autowired
+    private Map<String, PairSettingEntity> pairSettingEntityMap;
 
     public void initTradeObjectMap(CurrencyPairList pairList) {
         for (TradeObject tradeObject : pairList.getPairList()) {
@@ -28,9 +32,14 @@ public class InitFirstTradeObjects {
                 .stream()
                 .map(TradeObject::getPairName)
                 .collect(joining(","));
-        JsonNode node = sendRequestsService.sendGetTradesRequest(pairsUrl);
-        jSonMappingService.insertInitDataToTradeInMap(node, pairList);
-        node = sendRequestsService.sendGetPairSettingsRequest();
-        jSonMappingService.insertOrderBookDeltaInMap(node);
+        tradeObjectMap.putAll(sendRequestsService.sendInitGetTradesRequest(pairsUrl, pairList));
+        pairSettingEntityMap.putAll(sendRequestsService.sendGetPairSettingsRequest());
+        tradeObjectMap.forEach((key, value) -> value.setOrderBookDeltaPrice(
+                pairSettingEntityMap.entrySet().stream()
+                .filter(e -> key.equals(e.getKey()))
+                .map(e -> parseDouble(e.getValue().getMinPrice()))
+                .findFirst()
+                .orElseThrow()
+        ));
     }
 }

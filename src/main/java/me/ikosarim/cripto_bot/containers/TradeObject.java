@@ -20,9 +20,10 @@ public class TradeObject {
     private Integer maxOrdersCount;
 
     private String quantity;
-    private Double orderBookDelta;
+    private Double orderBookDeltaPrice;
 
-    private Double tradePrice;
+    private Double tradeBuyPrice;
+    private Double tradeSellPrice;
     private Double orderBookAskPrice;
     private Double orderBookBidPrice;
 }

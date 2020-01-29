@@ -1,6 +1,9 @@
 package me.ikosarim.cripto_bot.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import me.ikosarim.cripto_bot.containers.CurrencyPairList;
+import me.ikosarim.cripto_bot.containers.TradeObject;
+import me.ikosarim.cripto_bot.json_model.PairSettingEntity;
 import me.ikosarim.cripto_bot.json_model.UserInfoEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
@@ -26,7 +29,8 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
 
     @Autowired
     Map<String, String> userPrivateInfoMap;
-
+    @Autowired
+    private JSonMappingService jSonMappingService;
     @Autowired
     CreateSignService createSignService;
 
@@ -43,19 +47,23 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
     RestTemplate privateRestTemplate;
 
     @Override
-    public JsonNode sendGetTradesRequest(String pairs) {
+    public Map<String, TradeObject> sendInitGetTradesRequest(String pairs, CurrencyPairList pairList) {
+        return jSonMappingService.returnInitDataToTradeInMap(sendGetTradesRequestAndReturnNodeResult(pairs, 15), pairList);
+    }
+
+    private JsonNode sendGetTradesRequestAndReturnNodeResult(String pairs, int i) {
         String uri = UriComponentsBuilder.fromUriString(env.getProperty("spring.http.url.trades"))
-                .queryParam("limit", 15)
+                .queryParam("limit", i)
                 .queryParam("pair", pairs)
                 .toUriString();
         return publicRestTemplate.getForObject(uri, JsonNode.class);
     }
 
     @Override
-    public JsonNode sendGetPairSettingsRequest() {
+    public Map<String, PairSettingEntity> sendGetPairSettingsRequest() {
         String uri = UriComponentsBuilder.fromUriString(env.getProperty("spring.http.url.pair.settings"))
                 .toUriString();
-        return publicRestTemplate.getForObject(uri, JsonNode.class);
+        return jSonMappingService.convertToPairSettingEntity(publicRestTemplate.getForObject(uri, JsonNode.class));
     }
 
     @Override
