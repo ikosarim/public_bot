@@ -3,8 +3,7 @@ package me.ikosarim.cripto_bot.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
-import me.ikosarim.cripto_bot.json_model.PairSettingEntity;
-import me.ikosarim.cripto_bot.json_model.UserInfoEntity;
+import me.ikosarim.cripto_bot.json_model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
@@ -21,6 +20,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -81,6 +81,72 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
         HttpEntity requestEntity = new HttpEntity(multiValueMapArguments, createPostRequestHeaders(method, arguments));
 
         ResponseEntity<UserInfoEntity> response = privateRestTemplate.postForEntity(url, requestEntity, UserInfoEntity.class);
+
+        return response.getBody();
+    }
+
+    @Override
+    public Map<String, List<OpenOrderEntity>> sendGetOpenOrders() {
+        String url = env.getProperty("spring.http.url.open.orders");
+        String method = url.substring(url.lastIndexOf("/") + 1);
+
+        Map<String, Object> arguments = addNonceToRequest(null);
+
+        MultiValueMap<String, Object> multiValueMapArguments = new LinkedMultiValueMap<>();
+        arguments.forEach((key, value) -> multiValueMapArguments.put(key, new ArrayList<>() {{
+            add(value);
+        }}));
+
+        HttpEntity requestEntity = new HttpEntity(multiValueMapArguments, createPostRequestHeaders(method, arguments));
+
+        ResponseEntity<JsonNode> response = privateRestTemplate.postForEntity(url, requestEntity, JsonNode.class);
+
+        return jSonMappingService.mapToOpenOrdersEntity(response.getBody());
+    }
+
+    @Override
+    public OrderBookEntity sendGetOrderBookRequest(String pair) {
+        String uri = UriComponentsBuilder.fromUriString(env.getProperty("spring.http.order.book"))
+                .queryParam("pair", pair)
+                .queryParam("limit", 1)
+                .toUriString();
+        return publicRestTemplate.getForObject(uri, OrderBookEntity.class);
+    }
+
+    @Override
+    public OrderCancelStatus sendOrderCancelRequest(Map<String, Object> args) {
+        String url = env.getProperty("spring.http.url.order.cancel");
+        String method = url.substring(url.lastIndexOf("/") + 1);
+
+        Map<String, Object> arguments = addNonceToRequest(args);
+
+        MultiValueMap<String, Object> multiValueMapArguments = new LinkedMultiValueMap<>();
+        arguments.forEach((key, value) -> multiValueMapArguments.put(key, new ArrayList<>() {{
+            add(value);
+        }}));
+
+        HttpEntity requestEntity = new HttpEntity(multiValueMapArguments, createPostRequestHeaders(method, arguments));
+
+        ResponseEntity<OrderCancelStatus> response = privateRestTemplate.postForEntity(url, requestEntity, OrderCancelStatus.class);
+
+        return response.getBody();
+    }
+
+    @Override
+    public OrderCreateStatus sendOrderCreateRequest(Map<String, Object> args) {
+        String url = env.getProperty("spring.http.url.order.create");
+        String method = url.substring(url.lastIndexOf("/") + 1);
+
+        Map<String, Object> arguments = addNonceToRequest(args);
+
+        MultiValueMap<String, Object> multiValueMapArguments = new LinkedMultiValueMap<>();
+        arguments.forEach((key, value) -> multiValueMapArguments.put(key, new ArrayList<>() {{
+            add(value);
+        }}));
+
+        HttpEntity requestEntity = new HttpEntity(multiValueMapArguments, createPostRequestHeaders(method, arguments));
+
+        ResponseEntity<OrderCreateStatus> response = privateRestTemplate.postForEntity(url, requestEntity, OrderCreateStatus.class);
 
         return response.getBody();
     }

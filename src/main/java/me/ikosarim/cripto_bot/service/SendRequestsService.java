@@ -2,9 +2,9 @@ package me.ikosarim.cripto_bot.service;
 
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
-import me.ikosarim.cripto_bot.json_model.PairSettingEntity;
-import me.ikosarim.cripto_bot.json_model.UserInfoEntity;
+import me.ikosarim.cripto_bot.json_model.*;
 
+import java.util.List;
 import java.util.Map;
 
 public interface SendRequestsService {
@@ -14,4 +14,12 @@ public interface SendRequestsService {
     Map<String, PairSettingEntity> sendGetPairSettingsRequest();
 
     UserInfoEntity sendPostUserInfoRequest();
+
+    Map<String, List<OpenOrderEntity>> sendGetOpenOrders();
+
+    OrderBookEntity sendGetOrderBookRequest(String pairName);
+
+    OrderCancelStatus sendOrderCancelRequest(Map<String, Object> cancelOrderArguments);
+
+    OrderCreateStatus sendOrderCreateRequest(Map<String, Object> createOrderArguments);
 }

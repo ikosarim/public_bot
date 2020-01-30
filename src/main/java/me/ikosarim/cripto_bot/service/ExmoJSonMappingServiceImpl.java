@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
+import me.ikosarim.cripto_bot.json_model.OpenOrderEntity;
 import me.ikosarim.cripto_bot.json_model.PairSettingEntity;
 import me.ikosarim.cripto_bot.json_model.TradeInfoEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +85,30 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
             }
         });
         return pairSettingEntityMap;
+    }
+
+    @Override
+    public Map<String, List<OpenOrderEntity>> mapToOpenOrdersEntity(JsonNode node) {
+        Map<String, List<OpenOrderEntity>> openOrdersMap = new HashMap<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+        node.fields().forEachRemaining(entry -> {
+            String key = entry.getKey();
+            openOrdersMap.put(
+                    key,
+                    new ArrayList<>() {{
+                        entry.getValue().elements().forEachRemaining(
+                                el -> {
+                                    try {
+                                        add(objectMapper.treeToValue(el, OpenOrderEntity.class));
+                                    } catch (JsonProcessingException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                        );
+                    }}
+            );
+        });
+        return openOrdersMap;
     }
 
     private Double createLowBorder(TradeObject tradeObject, double v) {
