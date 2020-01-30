@@ -55,6 +55,7 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
                 .orElseThrow();
         tradeObject.setTradeBuyPrice(parseDouble(buyTradeInfo.getPrice()));
         tradeObject.setTradeSellPrice(parseDouble(sellTradeInfo.getPrice()));
+        tradeObject.setActualTradePrice(parseDouble(buyTradeInfo.getPrice()) + parseDouble(sellTradeInfo.getPrice()) / 2);
         tradeObject.setLowestBorder(createLowBorder(tradeObject, 2.0));
         tradeObject.setLowerBorder(createLowBorder(tradeObject, 1.0));
         tradeObject.setUpperBorder(createUpBorder(tradeObject, 1.0));
@@ -67,6 +68,33 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
                 .filter(tie -> buy.equals(tie.getType()))
                 .findFirst()
                 .orElseThrow();
+    }
+
+    @Override
+    public Map<String, Double> returnDataToTradeInMap(JsonNode node) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Double> actualPairTradePrice = new HashMap<>();
+        node.fields().forEachRemaining(
+                entry -> {
+                    String name = entry.getKey();
+                    actualPairTradePrice.put(
+                            name,
+                            getActualPrice(entry.getValue(), objectMapper)
+                    );
+                });
+        return actualPairTradePrice;
+    }
+
+    private Double getActualPrice(JsonNode node, ObjectMapper objectMapper) {
+        TradeInfoEntity tradeInfoEntity = createStreamFromIterator(node.elements()).map(el -> {
+            try {
+                return objectMapper.treeToValue(el, TradeInfoEntity.class);
+            } catch (JsonProcessingException e){
+                e.printStackTrace();
+            }
+            return null;
+        }).findFirst().orElseThrow();
+        return parseDouble(tradeInfoEntity.getPrice());
     }
 
     @Override

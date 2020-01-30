@@ -24,6 +24,10 @@ public class TradeObject {
 
     private Double tradeBuyPrice;
     private Double tradeSellPrice;
+    private Double actualTradePrice;
     private Double orderBookAskPrice;
     private Double orderBookBidPrice;
+
+    private boolean sellOrder = false;
+    private boolean buyOrder = false;
 }

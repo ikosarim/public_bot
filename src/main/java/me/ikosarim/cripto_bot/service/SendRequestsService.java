@@ -22,4 +22,6 @@ public interface SendRequestsService {
     OrderCancelStatus sendOrderCancelRequest(Map<String, Object> cancelOrderArguments);
 
     OrderCreateStatus sendOrderCreateRequest(Map<String, Object> createOrderArguments);
+
+    Map<String, Double> sendGetTradesRequest(String pairUrl);
 }

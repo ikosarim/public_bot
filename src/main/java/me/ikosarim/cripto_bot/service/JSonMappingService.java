@@ -16,4 +16,6 @@ public interface JSonMappingService {
     Map<String, PairSettingEntity> convertToPairSettingEntity(JsonNode node);
 
     Map<String, List<OpenOrderEntity>> mapToOpenOrdersEntity(JsonNode node);
+
+    Map<String, Double> returnDataToTradeInMap(JsonNode node);
 }

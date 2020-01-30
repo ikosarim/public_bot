@@ -1,5 +1,6 @@
 package me.ikosarim.cripto_bot.tasks;
 
+import lombok.Setter;
 import me.ikosarim.cripto_bot.containers.TradeObject;
 import me.ikosarim.cripto_bot.json_model.OpenOrderEntity;
 import me.ikosarim.cripto_bot.json_model.OrderBookEntity;
@@ -19,6 +20,7 @@ import static java.lang.Double.parseDouble;
 
 @Component
 @Scope("prototype")
+@Setter
 public class ReplaceOrderInGlassTask implements Runnable {
 
     private TradeObject tradeObject;

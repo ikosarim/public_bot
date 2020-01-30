@@ -51,6 +51,11 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
         return jSonMappingService.returnInitDataToTradeInMap(sendGetTradesRequestAndReturnNodeResult(pairs, 15), pairList);
     }
 
+    @Override
+    public Map<String, Double> sendGetTradesRequest(String pairUrl) {
+        return jSonMappingService.returnDataToTradeInMap(sendGetTradesRequestAndReturnNodeResult(pairUrl, 1));
+    }
+
     private JsonNode sendGetTradesRequestAndReturnNodeResult(String pairs, int i) {
         String uri = UriComponentsBuilder.fromUriString(env.getProperty("spring.http.url.trades"))
                 .queryParam("limit", i)
