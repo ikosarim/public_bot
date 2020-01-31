@@ -40,13 +40,18 @@ public class ReplaceOrderInGlassTask implements Runnable {
         Map<String, List<OpenOrderEntity>> userOpenOrders = sendRequestsService.sendGetOpenOrders();
         String tradePairName = tradeObject.getPairName();
         List<OpenOrderEntity> openOrderEntityListForCurrentPair = userOpenOrders.get(tradePairName);
+        ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(tradePairName);
         if (openOrderEntityListForCurrentPair == null) {
 //            Publish that trade is complete
-            scheduledFutureMap.get(tradePairName).cancel(true);
+            cancelAndRemoveTask(taskFuture);
         }
-        if (openOrderEntityListForCurrentPair.stream().noneMatch(order -> orderId.toString().equals(order.getOrderId()))) {
+        OpenOrderEntity openOrderEntityForThisTask = openOrderEntityListForCurrentPair.stream()
+                .filter(order -> orderId.toString().equals(order.getOrderId()))
+                .findFirst()
+                .orElse(null);
+        if (openOrderEntityForThisTask == null) {
 //            Publish that trade is complete
-            scheduledFutureMap.get(tradePairName).cancel(true);
+            cancelAndRemoveTask(taskFuture);
         }
         OrderBookEntity orderBookEntity = sendRequestsService.sendGetOrderBookRequest(tradePairName);
         Double priceInGlass;
@@ -65,40 +70,52 @@ public class ReplaceOrderInGlassTask implements Runnable {
             priceToTrade = priceInGlass - tradeObject.getOrderBookDeltaPrice();
         } else {
 //            Print in telegram chat and print in log about error
-            scheduledFutureMap.get(tradePairName).cancel(true);
+            cancelAndRemoveTask(taskFuture);
         }
-        replaceOrderToTopInGlass(tradePairName, priceToTrade);
+        Double qty = parseDouble(openOrderEntityForThisTask.getQuantity());
+        replaceOrderToTopInGlass(priceToTrade, qty, taskFuture);
     }
 
-    private void replaceOrderToTopInGlass(String tradePairName, double priceToTrade) {
-        cancelOrder(tradePairName);
-        createOrder(tradePairName, priceToTrade);
+    private void replaceOrderToTopInGlass(double priceToTrade, Double qty,
+                                          ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
+        cancelOrder(taskFuture);
+        createOrder(priceToTrade, qty, taskFuture);
     }
 
-    private void createOrder(String tradePairName, double priceToTrade) {
+    private void createOrder(double priceToTrade, Double qty, ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
         final Double finalPriceToTrade = priceToTrade;
         Map<String, Object> createOrderArguments = new HashMap<>() {{
-            put("pair", tradePairName);
-            put("quantity", tradeObject.getQuantity());
+            put("pair", tradeObject.getPairName());
+            put("quantity", qty);
             put("price", finalPriceToTrade);
             put("type", tradeType);
         }};
         OrderCreateStatus orderCreateStatus = sendRequestsService.sendOrderCreateRequest(createOrderArguments);
         if (!orderCreateStatus.isResult()){
 //            Publish that error and error cause
-            scheduledFutureMap.get(tradePairName).cancel(true);
+            cancelAndRemoveTask(taskFuture);
+        }
+        if ("buy".equals(tradeType)){
+            tradeObject.setOrderBookBidPrice(finalPriceToTrade);
+        } else if ("sell".equals(tradeType)){
+            tradeObject.setOrderBookAskPrice(finalPriceToTrade);
         }
         orderId = orderCreateStatus.getOrderId();
     }
 
-    private void cancelOrder(String tradePairName) {
+    private void cancelOrder(ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
         Map<String, Object> cancelOrderArguments = new HashMap<>() {{
             put("order_id", orderId);
         }};
         OrderCancelStatus orderCancelStatus = sendRequestsService.sendOrderCancelRequest(cancelOrderArguments);
         if (!orderCancelStatus.isResult()) {
 //            Publish that error and error cause
-            scheduledFutureMap.get(tradePairName).cancel(true);
+            cancelAndRemoveTask(taskFuture);
         }
+    }
+
+    private void cancelAndRemoveTask(ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
+        taskFuture.cancel(true);
+        scheduledFutureMap.remove(taskFuture);
     }
 }

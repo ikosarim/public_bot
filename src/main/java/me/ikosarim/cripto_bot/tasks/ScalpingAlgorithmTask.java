@@ -16,6 +16,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 
 public class ScalpingAlgorithmTask implements Runnable {
+
     @Autowired
     private Map<String, TradeObject> tradeObjectMap;
     @Autowired
@@ -38,44 +39,55 @@ public class ScalpingAlgorithmTask implements Runnable {
             if (name.equals(pairName)) {
                 if (actualPrice > tradeObject.getUpperBorder()
                         && actualPrice < tradeObject.getUppestBorder()) {
+                    cancelTrendTask(tradeObject, "Bear_");
                     workInScalpingTradeCorridor(tradeObject, actualPrice, actualPrice < tradeObject.getActualTradePrice(),
                             tradeObject.isSellOrder(), "sell", true, false);
                 } else if (actualPrice < tradeObject.getLowerBorder()
                         && actualPrice > tradeObject.getLowestBorder()) {
+                    cancelTrendTask(tradeObject, "Bull_");
                     workInScalpingTradeCorridor(tradeObject, actualPrice, actualPrice > tradeObject.getActualTradePrice(),
                             tradeObject.isBuyOrder(), "buy", false, true);
                 } else if (actualPrice > tradeObject.getLowerBorder()
                         && actualPrice < tradeObject.getUpperBorder()) {
                     workInMainCorridor(tradeObject, actualPrice);
                 } else if (actualPrice > tradeObject.getUppestBorder()) {
-//                    Создать таск на покупку (бычий тренд) и запустить таск на перемещение ордера
-//                    Запомнить, что это трендовый ордер, канселять его, если опустится в нижний корридор
-                    TradeObject newBorderTradeObject = sendRequestsService.sendInitGetTradesRequest(
-                            pairName,
-                            new CurrencyPairList(singletonList(tradeObject))
-                    ).get(pairName);
-                    tradeObjectMap.put(pairName, newBorderTradeObject);
-                } else if (actualPrice < tradeObject.getLowestBorder()){
-//                    Создать таск на продажу (медвежий тренд) и запустить таск на перемещение ордера
-//                    Запомнить, что это трендовый ордер, канселять его, если поднимется в верхний корридор
-                    TradeObject newBorderTradeObject = sendRequestsService.sendInitGetTradesRequest(
-                            pairName,
-                            new CurrencyPairList(singletonList(tradeObject))
-                    ).get(pairName);
-                    tradeObjectMap.put(pairName, newBorderTradeObject);
+                    createOrderForTrade(tradeObject, actualPrice, "buy", "Bull_");
+                    createNewTradeConditions(pairName, tradeObject);
+                } else if (actualPrice < tradeObject.getLowestBorder()) {
+                    createOrderForTrade(tradeObject, actualPrice, "sell", "Bear_");
+                    createNewTradeConditions(pairName, tradeObject);
                 }
             }
         }));
     }
 
-    // TODO: 31.01.2020 Удалять из мапы future после остановки таска
+    private void cancelTrendTask(TradeObject tradeObject, String trendType) {
+        ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(trendType + tradeObject.getPairName());
+        if (taskFuture != null) {
+            taskFuture.cancel(true);
+            scheduledFutureMap.remove(taskFuture);
+        }
+    }
+
+    private void createNewTradeConditions(String pairName, TradeObject tradeObject) {
+        tradeObject.setBuyOrder(false);
+        tradeObject.setSellOrder(false);
+        TradeObject newBorderTradeObject = sendRequestsService.sendInitGetTradesRequest(
+                pairName,
+                new CurrencyPairList(singletonList(tradeObject))
+        ).get(pairName);
+        newBorderTradeObject.setOrderBookDeltaPrice(tradeObject.getOrderBookDeltaPrice());
+        tradeObjectMap.put(pairName, newBorderTradeObject);
+    }
 
     private void workInMainCorridor(TradeObject tradeObject, Double actualPrice) {
         tradeObject.setActualTradePrice(actualPrice);
-        if (scheduledFutureMap.get(tradeObject.getPairName()) != null) {
+        ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(tradeObject.getPairName());
+        if (taskFuture != null) {
             tradeObject.setBuyOrder(false);
             tradeObject.setSellOrder(false);
-            scheduledFutureMap.get(tradeObject.getPairName()).cancel(true);
+            taskFuture.cancel(true);
+            scheduledFutureMap.remove(taskFuture);
         }
     }
 
@@ -83,23 +95,29 @@ public class ScalpingAlgorithmTask implements Runnable {
                                              boolean buyOrder, String tradeType, boolean isSell, boolean isBuy) {
         if (priceCondition) {
             if (!buyOrder) {
-                Integer orderId = createOrder(tradeObject, actualPrice, tradeType);
+                Integer orderId = createOrderForTrade(tradeObject, actualPrice, tradeType, "");
                 if (orderId != null) {
                     tradeObject.setSellOrder(isSell);
                     tradeObject.setBuyOrder(isBuy);
-                    ReplaceOrderInGlassTask task = (ReplaceOrderInGlassTask) ctx.getBean("ReplaceOrderInGlassTask");
-                    task.setTradeObject(tradeObject);
-                    task.setOrderId(orderId);
-                    task.setTradeType(tradeType);
-                    scheduledFutureMap.put(
-                            tradeObject.getPairName(),
-                            threadPoolTaskScheduler.scheduleWithFixedDelay(task, 2000)
-                    );
                 }
             }
-        } else {
-            tradeObject.setActualTradePrice(actualPrice);
         }
+        tradeObject.setActualTradePrice(actualPrice);
+    }
+
+    private Integer createOrderForTrade(TradeObject tradeObject, Double actualPrice, String tradeType, String trendType) {
+        Integer orderId = createOrder(tradeObject, actualPrice, tradeType);
+        if (orderId != null) {
+            ReplaceOrderInGlassTask task = ctx.getBean(ReplaceOrderInGlassTask.class);
+            task.setOrderId(orderId);
+            task.setTradeObject(tradeObject);
+            task.setTradeType(tradeType);
+            scheduledFutureMap.put(
+                    trendType + tradeObject.getPairName(),
+                    threadPoolTaskScheduler.scheduleWithFixedDelay(task, 2000)
+            );
+        }
+        return orderId;
     }
 
     private Integer createOrder(TradeObject tradeObject, Double actualPrice, String orderType) {
@@ -113,6 +131,12 @@ public class ScalpingAlgorithmTask implements Runnable {
         OrderCreateStatus orderCreateStatus = sendRequestsService.sendOrderCreateRequest(createOrderArguments);
         if (!orderCreateStatus.isResult()) {
 //            Publish that error and error cause
+            return null;
+        }
+        if ("buy".equals(orderType)){
+            tradeObject.setOrderBookBidPrice(finalPriceToTrade);
+        } else if ("sell".equals(orderType)){
+            tradeObject.setOrderBookAskPrice(finalPriceToTrade);
         }
         return orderCreateStatus.getOrderId();
     }
