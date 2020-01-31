@@ -19,7 +19,7 @@ public class TradeObject {
 
     private Integer maxOrdersCount;
 
-    private String quantity;
+    private double quantity;
     private Double orderBookDeltaPrice;
 
     private Double tradeBuyPrice;

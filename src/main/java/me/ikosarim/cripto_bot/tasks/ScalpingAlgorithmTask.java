@@ -1,5 +1,6 @@
 package me.ikosarim.cripto_bot.tasks;
 
+import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
 import me.ikosarim.cripto_bot.json_model.OrderCreateStatus;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
@@ -11,9 +12,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 
-public class ScalpingAlgorithmTask implements Runnable{
+public class ScalpingAlgorithmTask implements Runnable {
     @Autowired
     private Map<String, TradeObject> tradeObjectMap;
     @Autowired
@@ -32,31 +34,45 @@ public class ScalpingAlgorithmTask implements Runnable{
     @Override
     public void run() {
         Map<String, Double> actualPairTradePrice = sendRequestsService.sendGetTradesRequest(pairUrl);
-        tradeObjectMap.forEach((pairName, tradeObject) -> {
-            actualPairTradePrice.forEach((name, actualPrice) -> {
-                if (name.equals(pairName)){
-                    if (actualPrice > tradeObject.getUpperBorder()
-                    && actualPrice < tradeObject.getUppestBorder()){
-                        workInScalpingTradeCorridor(tradeObject, actualPrice, actualPrice < tradeObject.getActualTradePrice(),
-                                tradeObject.isSellOrder(), "sell", true, false);
-                    } else if (actualPrice < tradeObject.getLowerBorder()
-                    && actualPrice > tradeObject.getLowestBorder()){
-                        workInScalpingTradeCorridor(tradeObject, actualPrice, actualPrice > tradeObject.getActualTradePrice(),
-                                tradeObject.isBuyOrder(), "buy", false, true);
-                    } else if (actualPrice > tradeObject.getLowerBorder()
-                    && actualPrice < tradeObject.getUpperBorder()){
-                        workInMainCorridor(tradeObject, actualPrice);
-                    }
+        tradeObjectMap.forEach((pairName, tradeObject) -> actualPairTradePrice.forEach((name, actualPrice) -> {
+            if (name.equals(pairName)) {
+                if (actualPrice > tradeObject.getUpperBorder()
+                        && actualPrice < tradeObject.getUppestBorder()) {
+                    workInScalpingTradeCorridor(tradeObject, actualPrice, actualPrice < tradeObject.getActualTradePrice(),
+                            tradeObject.isSellOrder(), "sell", true, false);
+                } else if (actualPrice < tradeObject.getLowerBorder()
+                        && actualPrice > tradeObject.getLowestBorder()) {
+                    workInScalpingTradeCorridor(tradeObject, actualPrice, actualPrice > tradeObject.getActualTradePrice(),
+                            tradeObject.isBuyOrder(), "buy", false, true);
+                } else if (actualPrice > tradeObject.getLowerBorder()
+                        && actualPrice < tradeObject.getUpperBorder()) {
+                    workInMainCorridor(tradeObject, actualPrice);
+                } else if (actualPrice > tradeObject.getUppestBorder()) {
+//                    Создать таск на покупку (бычий тренд) и запустить таск на перемещение ордера
+//                    Запомнить, что это трендовый ордер, канселять его, если опустится в нижний корридор
+                    TradeObject newBorderTradeObject = sendRequestsService.sendInitGetTradesRequest(
+                            pairName,
+                            new CurrencyPairList(singletonList(tradeObject))
+                    ).get(pairName);
+                    tradeObjectMap.put(pairName, newBorderTradeObject);
+                } else if (actualPrice < tradeObject.getLowestBorder()){
+//                    Создать таск на продажу (медвежий тренд) и запустить таск на перемещение ордера
+//                    Запомнить, что это трендовый ордер, канселять его, если поднимется в верхний корридор
+                    TradeObject newBorderTradeObject = sendRequestsService.sendInitGetTradesRequest(
+                            pairName,
+                            new CurrencyPairList(singletonList(tradeObject))
+                    ).get(pairName);
+                    tradeObjectMap.put(pairName, newBorderTradeObject);
                 }
-            });
-        });
+            }
+        }));
     }
 
     // TODO: 31.01.2020 Удалять из мапы future после остановки таска
 
     private void workInMainCorridor(TradeObject tradeObject, Double actualPrice) {
         tradeObject.setActualTradePrice(actualPrice);
-        if (scheduledFutureMap.get(tradeObject.getPairName()) != null){
+        if (scheduledFutureMap.get(tradeObject.getPairName()) != null) {
             tradeObject.setBuyOrder(false);
             tradeObject.setSellOrder(false);
             scheduledFutureMap.get(tradeObject.getPairName()).cancel(true);
@@ -68,16 +84,18 @@ public class ScalpingAlgorithmTask implements Runnable{
         if (priceCondition) {
             if (!buyOrder) {
                 Integer orderId = createOrder(tradeObject, actualPrice, tradeType);
-                tradeObject.setSellOrder(isSell);
-                tradeObject.setBuyOrder(isBuy);
-                ReplaceOrderInGlassTask task = (ReplaceOrderInGlassTask) ctx.getBean("ReplaceOrderInGlassTask");
-                task.setTradeObject(tradeObject);
-                task.setOrderId(orderId);
-                task.setTradeType(tradeType);
-                scheduledFutureMap.put(
-                        tradeObject.getPairName(),
-                        threadPoolTaskScheduler.scheduleWithFixedDelay(task, 2000)
-                );
+                if (orderId != null) {
+                    tradeObject.setSellOrder(isSell);
+                    tradeObject.setBuyOrder(isBuy);
+                    ReplaceOrderInGlassTask task = (ReplaceOrderInGlassTask) ctx.getBean("ReplaceOrderInGlassTask");
+                    task.setTradeObject(tradeObject);
+                    task.setOrderId(orderId);
+                    task.setTradeType(tradeType);
+                    scheduledFutureMap.put(
+                            tradeObject.getPairName(),
+                            threadPoolTaskScheduler.scheduleWithFixedDelay(task, 2000)
+                    );
+                }
             }
         } else {
             tradeObject.setActualTradePrice(actualPrice);
@@ -93,7 +111,7 @@ public class ScalpingAlgorithmTask implements Runnable{
             put("type", orderType);
         }};
         OrderCreateStatus orderCreateStatus = sendRequestsService.sendOrderCreateRequest(createOrderArguments);
-        if (!orderCreateStatus.isResult()){
+        if (!orderCreateStatus.isResult()) {
 //            Publish that error and error cause
         }
         return orderCreateStatus.getOrderId();
