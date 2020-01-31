@@ -40,13 +40,14 @@ public class ReplaceOrderInGlassTask implements Runnable {
         Map<String, List<OpenOrderEntity>> userOpenOrders = sendRequestsService.sendGetOpenOrders();
         String tradePairName = tradeObject.getPairName();
         List<OpenOrderEntity> openOrderEntityListForCurrentPair = userOpenOrders.get(tradePairName);
+        ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(tradePairName);
         if (openOrderEntityListForCurrentPair == null) {
 //            Publish that trade is complete
-            scheduledFutureMap.get(tradePairName).cancel(true);
+            cancelAndRemoveTask(taskFuture);
         }
         if (openOrderEntityListForCurrentPair.stream().noneMatch(order -> orderId.toString().equals(order.getOrderId()))) {
 //            Publish that trade is complete
-            scheduledFutureMap.get(tradePairName).cancel(true);
+            cancelAndRemoveTask(taskFuture);
         }
         OrderBookEntity orderBookEntity = sendRequestsService.sendGetOrderBookRequest(tradePairName);
         Double priceInGlass;
@@ -65,20 +66,21 @@ public class ReplaceOrderInGlassTask implements Runnable {
             priceToTrade = priceInGlass - tradeObject.getOrderBookDeltaPrice();
         } else {
 //            Print in telegram chat and print in log about error
-            scheduledFutureMap.get(tradePairName).cancel(true);
+            cancelAndRemoveTask(taskFuture);
         }
-        replaceOrderToTopInGlass(tradePairName, priceToTrade);
+        replaceOrderToTopInGlass(priceToTrade, taskFuture);
     }
 
-    private void replaceOrderToTopInGlass(String tradePairName, double priceToTrade) {
-        cancelOrder(tradePairName);
-        createOrder(tradePairName, priceToTrade);
+    private void replaceOrderToTopInGlass(double priceToTrade,
+                                          ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
+        cancelOrder(taskFuture);
+        createOrder(priceToTrade, taskFuture);
     }
 
-    private void createOrder(String tradePairName, double priceToTrade) {
+    private void createOrder(double priceToTrade, ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
         final Double finalPriceToTrade = priceToTrade;
         Map<String, Object> createOrderArguments = new HashMap<>() {{
-            put("pair", tradePairName);
+            put("pair", tradeObject.getPairName());
             put("quantity", tradeObject.getQuantity());
             put("price", finalPriceToTrade);
             put("type", tradeType);
@@ -86,19 +88,24 @@ public class ReplaceOrderInGlassTask implements Runnable {
         OrderCreateStatus orderCreateStatus = sendRequestsService.sendOrderCreateRequest(createOrderArguments);
         if (!orderCreateStatus.isResult()){
 //            Publish that error and error cause
-            scheduledFutureMap.get(tradePairName).cancel(true);
+            cancelAndRemoveTask(taskFuture);
         }
         orderId = orderCreateStatus.getOrderId();
     }
 
-    private void cancelOrder(String tradePairName) {
+    private void cancelOrder(ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
         Map<String, Object> cancelOrderArguments = new HashMap<>() {{
             put("order_id", orderId);
         }};
         OrderCancelStatus orderCancelStatus = sendRequestsService.sendOrderCancelRequest(cancelOrderArguments);
         if (!orderCancelStatus.isResult()) {
 //            Publish that error and error cause
-            scheduledFutureMap.get(tradePairName).cancel(true);
+            cancelAndRemoveTask(taskFuture);
         }
+    }
+
+    private void cancelAndRemoveTask(ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
+        taskFuture.cancel(true);
+        scheduledFutureMap.remove(taskFuture);
     }
 }
