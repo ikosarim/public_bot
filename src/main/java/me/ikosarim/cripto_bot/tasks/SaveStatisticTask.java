@@ -6,6 +6,7 @@ import me.ikosarim.cripto_bot.repos.AllStatisticRepository;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ public class SaveStatisticTask {
     SendRequestsService sendRequestsService;
 
     @Scheduled(cron = "0 0 12 * * ? 2020")
+    @Async
     public void saveStatistic() {
         UserInfoEntity userInfoEntity = sendRequestsService.sendPostUserInfoRequest();
         Map<String, Pair<String, String>> allQuantityPairMap = new HashMap<>();
