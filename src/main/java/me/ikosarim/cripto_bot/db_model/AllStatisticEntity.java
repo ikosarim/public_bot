@@ -2,11 +2,10 @@ package me.ikosarim.cripto_bot.db_model;
 
 import lombok.*;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.sql.Date;
-
-import static javax.persistence.CascadeType.ALL;
-import static javax.persistence.FetchType.LAZY;
 
 @Entity
 @Getter
@@ -17,11 +16,6 @@ import static javax.persistence.FetchType.LAZY;
 public class AllStatisticEntity {
 
     @Id
-    @Column(name = "all_statistic_id", nullable = false)
-    @GeneratedValue(generator = "statistic_generator")
-    @SequenceGenerator(name = "statistic_generator")
-    private int allStatisticId;
-
     @Column(name = "date", nullable = false)
     private Date date;
 

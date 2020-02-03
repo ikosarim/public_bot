@@ -16,6 +16,9 @@ import java.sql.Date;
 public class TradeHistoryEntity {
 
     @Id
+    @Column(name = "trade_id", nullable = false)
+    private Integer tradeId;
+
     @Column(name = "date", nullable = false)
     private Date date;
 
