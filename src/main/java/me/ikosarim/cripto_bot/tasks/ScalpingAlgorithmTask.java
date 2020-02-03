@@ -61,8 +61,8 @@ public class ScalpingAlgorithmTask implements Runnable {
         }));
     }
 
-    private void cancelTrendTask(TradeObject tradeObject, String bear_) {
-        ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(bear_ + tradeObject.getPairName());
+    private void cancelTrendTask(TradeObject tradeObject, String trendType) {
+        ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(trendType + tradeObject.getPairName());
         if (taskFuture != null) {
             taskFuture.cancel(true);
             scheduledFutureMap.remove(taskFuture);
@@ -76,6 +76,7 @@ public class ScalpingAlgorithmTask implements Runnable {
                 pairName,
                 new CurrencyPairList(singletonList(tradeObject))
         ).get(pairName);
+        newBorderTradeObject.setOrderBookDeltaPrice(tradeObject.getOrderBookDeltaPrice());
         tradeObjectMap.put(pairName, newBorderTradeObject);
     }
 
@@ -130,6 +131,12 @@ public class ScalpingAlgorithmTask implements Runnable {
         OrderCreateStatus orderCreateStatus = sendRequestsService.sendOrderCreateRequest(createOrderArguments);
         if (!orderCreateStatus.isResult()) {
 //            Publish that error and error cause
+            return null;
+        }
+        if ("buy".equals(orderType)){
+            tradeObject.setOrderBookBidPrice(finalPriceToTrade);
+        } else if ("sell".equals(orderType)){
+            tradeObject.setOrderBookAskPrice(finalPriceToTrade);
         }
         return orderCreateStatus.getOrderId();
     }

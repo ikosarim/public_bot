@@ -45,7 +45,11 @@ public class ReplaceOrderInGlassTask implements Runnable {
 //            Publish that trade is complete
             cancelAndRemoveTask(taskFuture);
         }
-        if (openOrderEntityListForCurrentPair.stream().noneMatch(order -> orderId.toString().equals(order.getOrderId()))) {
+        OpenOrderEntity openOrderEntityForThisTask = openOrderEntityListForCurrentPair.stream()
+                .filter(order -> orderId.toString().equals(order.getOrderId()))
+                .findFirst()
+                .orElse(null);
+        if (openOrderEntityForThisTask == null) {
 //            Publish that trade is complete
             cancelAndRemoveTask(taskFuture);
         }
@@ -68,20 +72,21 @@ public class ReplaceOrderInGlassTask implements Runnable {
 //            Print in telegram chat and print in log about error
             cancelAndRemoveTask(taskFuture);
         }
-        replaceOrderToTopInGlass(priceToTrade, taskFuture);
+        Double qty = parseDouble(openOrderEntityForThisTask.getQuantity());
+        replaceOrderToTopInGlass(priceToTrade, qty, taskFuture);
     }
 
-    private void replaceOrderToTopInGlass(double priceToTrade,
+    private void replaceOrderToTopInGlass(double priceToTrade, Double qty,
                                           ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
         cancelOrder(taskFuture);
-        createOrder(priceToTrade, taskFuture);
+        createOrder(priceToTrade, qty, taskFuture);
     }
 
-    private void createOrder(double priceToTrade, ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
+    private void createOrder(double priceToTrade, Double qty, ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
         final Double finalPriceToTrade = priceToTrade;
         Map<String, Object> createOrderArguments = new HashMap<>() {{
             put("pair", tradeObject.getPairName());
-            put("quantity", tradeObject.getQuantity());
+            put("quantity", qty);
             put("price", finalPriceToTrade);
             put("type", tradeType);
         }};
@@ -89,6 +94,11 @@ public class ReplaceOrderInGlassTask implements Runnable {
         if (!orderCreateStatus.isResult()){
 //            Publish that error and error cause
             cancelAndRemoveTask(taskFuture);
+        }
+        if ("buy".equals(tradeType)){
+            tradeObject.setOrderBookBidPrice(finalPriceToTrade);
+        } else if ("sell".equals(tradeType)){
+            tradeObject.setOrderBookAskPrice(finalPriceToTrade);
         }
         orderId = orderCreateStatus.getOrderId();
     }
