@@ -22,18 +22,15 @@ public class AllStatisticEntity {
     @SequenceGenerator(name = "statistic_generator")
     private int allStatisticId;
 
-    @Column(name = "currency_pair", nullable = false)
-    private String currencyPair;
-
-    @Column(name = "quantity", nullable = false)
-    private double quantity;
-
     @Column(name = "date", nullable = false)
     private Date date;
 
-    @OneToOne(mappedBy = "wallet_statistic", cascade = ALL, fetch = LAZY, orphanRemoval = true)
-    private WalletStatisticEntity walletStatisticEntity;
+    @Column(name = "currency_pair", nullable = false)
+    private String currencyPair;
 
-    @OneToOne(mappedBy = "open_orders_statistic", cascade = ALL, fetch = LAZY, orphanRemoval = true)
-    private OpenOrdersStatisticEntity openOrdersStatisticEntity;
+    @Column(name = "wallet_quantity", nullable = false)
+    private String walletQuantity;
+
+    @Column(name = "open_orders_quantity", nullable = false)
+    private String openOrdersQuantity;
 }
