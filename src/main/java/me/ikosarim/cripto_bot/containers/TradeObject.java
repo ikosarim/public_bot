@@ -17,8 +17,6 @@ public class TradeObject {
     private Double lowerBorder;
     private Double lowestBorder;
 
-    private Integer maxOrdersCount;
-
     private double quantity;
     private Double orderBookDeltaPrice;
 

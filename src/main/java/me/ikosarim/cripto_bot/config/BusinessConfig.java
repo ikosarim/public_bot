@@ -9,6 +9,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
 @Configuration
@@ -31,7 +32,7 @@ public class BusinessConfig {
 
     @Bean
     public Map<String, ScheduledFuture<ReplaceOrderInGlassTask>> scheduledFutureMap() {
-        return new HashMap<>();
+        return new ConcurrentHashMap<>();
     }
 
     @Bean
@@ -39,10 +40,5 @@ public class BusinessConfig {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
         threadPoolTaskScheduler.setPoolSize(16);
         return threadPoolTaskScheduler;
-    }
-
-    @Bean
-    public Map<String, ScheduledFuture> stringScheduledFutureMap(){
-        return new HashMap<>();
     }
 }

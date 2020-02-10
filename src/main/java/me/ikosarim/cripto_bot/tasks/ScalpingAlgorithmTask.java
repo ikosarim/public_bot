@@ -2,6 +2,7 @@ package me.ikosarim.cripto_bot.tasks;
 
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
+import me.ikosarim.cripto_bot.json_model.OrderCancelStatus;
 import me.ikosarim.cripto_bot.json_model.OrderCreateStatus;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 
 import static java.util.Collections.singletonList;
@@ -24,7 +26,7 @@ public class ScalpingAlgorithmTask implements Runnable {
     @Autowired
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
     @Autowired
-    private Map<String, ScheduledFuture> scheduledFutureMap;
+    private Map<String, ScheduledFuture<ReplaceOrderInGlassTask>> scheduledFutureMap;
     @Autowired
     private ApplicationContext ctx;
 
@@ -67,6 +69,7 @@ public class ScalpingAlgorithmTask implements Runnable {
         ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(trendType + tradeObject.getPairName());
         if (taskFuture != null) {
             taskFuture.cancel(true);
+            cancelTaskOrder(taskFuture);
             scheduledFutureMap.remove(taskFuture);
         }
     }
@@ -87,7 +90,24 @@ public class ScalpingAlgorithmTask implements Runnable {
             tradeObject.setBuyOrder(false);
             tradeObject.setSellOrder(false);
             taskFuture.cancel(true);
+            cancelTaskOrder(taskFuture);
             scheduledFutureMap.remove(taskFuture);
+        }
+    }
+
+    private void cancelTaskOrder(ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
+        Map<String, Object> args = new HashMap<>() {{
+            try {
+                put("order_id", taskFuture.get().getOrderId());
+            } catch (InterruptedException e) {
+                e.printStackTrace(); // write in log
+            } catch (ExecutionException e) {
+                e.printStackTrace(); // write in log
+            }
+        }};
+        OrderCancelStatus orderCancelStatus = sendRequestsService.sendOrderCancelRequest(args);
+        if (!orderCancelStatus.isResult()) {
+//            logging
         }
     }
 
@@ -113,7 +133,7 @@ public class ScalpingAlgorithmTask implements Runnable {
             tradeObject.setBuyOrder(isBuy);
             scheduledFutureMap.put(
                     trendType + tradeObject.getPairName(),
-                    threadPoolTaskScheduler.scheduleWithFixedDelay(task, 2000)
+                    (ScheduledFuture<ReplaceOrderInGlassTask>) threadPoolTaskScheduler.scheduleWithFixedDelay(task, 2000)
             );
         }
         return orderId;
@@ -129,7 +149,7 @@ public class ScalpingAlgorithmTask implements Runnable {
         }};
         OrderCreateStatus orderCreateStatus = sendRequestsService.sendOrderCreateRequest(createOrderArguments);
         if (!orderCreateStatus.isResult()) {
-//            Publish that error and error cause
+//            Publish that error and error cause (logging)
             return null;
         }
         if ("buy".equals(orderType)) {

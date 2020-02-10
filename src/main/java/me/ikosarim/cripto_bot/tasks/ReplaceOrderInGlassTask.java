@@ -42,7 +42,7 @@ public class ReplaceOrderInGlassTask implements Runnable {
         List<OpenOrderEntity> openOrderEntityListForCurrentPair = userOpenOrders.get(tradePairName);
         ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(tradePairName);
         if (openOrderEntityListForCurrentPair == null) {
-//            Publish that trade is complete
+//            Publish that trade is complete (logging)
             cancelAndRemoveTask(taskFuture);
         }
         OpenOrderEntity openOrderEntityForThisTask = openOrderEntityListForCurrentPair.stream()
@@ -50,7 +50,7 @@ public class ReplaceOrderInGlassTask implements Runnable {
                 .findFirst()
                 .orElse(null);
         if (openOrderEntityForThisTask == null) {
-//            Publish that trade is complete
+//            Publish that trade is complete (logging)
             cancelAndRemoveTask(taskFuture);
         }
         OrderBookEntity orderBookEntity = sendRequestsService.sendGetOrderBookRequest(tradePairName);
@@ -69,7 +69,7 @@ public class ReplaceOrderInGlassTask implements Runnable {
             priceInGlass = parseDouble(orderBookEntity.getAsk()[0][0]);
             priceToTrade = priceInGlass - tradeObject.getOrderBookDeltaPrice();
         } else {
-//            Print in telegram chat and print in log about error
+//            Print in telegram chat and print in log about error (logging)
             cancelAndRemoveTask(taskFuture);
         }
         Double qty = parseDouble(openOrderEntityForThisTask.getQuantity());
@@ -92,7 +92,7 @@ public class ReplaceOrderInGlassTask implements Runnable {
         }};
         OrderCreateStatus orderCreateStatus = sendRequestsService.sendOrderCreateRequest(createOrderArguments);
         if (!orderCreateStatus.isResult()){
-//            Publish that error and error cause
+//            Publish that error and error cause (logging)
             cancelAndRemoveTask(taskFuture);
         }
         if ("buy".equals(tradeType)){
@@ -109,7 +109,7 @@ public class ReplaceOrderInGlassTask implements Runnable {
         }};
         OrderCancelStatus orderCancelStatus = sendRequestsService.sendOrderCancelRequest(cancelOrderArguments);
         if (!orderCancelStatus.isResult()) {
-//            Publish that error and error cause
+//            Publish that error and error cause (logging)
             cancelAndRemoveTask(taskFuture);
         }
     }
@@ -117,5 +117,9 @@ public class ReplaceOrderInGlassTask implements Runnable {
     private void cancelAndRemoveTask(ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
         taskFuture.cancel(true);
         scheduledFutureMap.remove(taskFuture);
+    }
+
+    public Integer getOrderId() {
+        return orderId;
     }
 }
