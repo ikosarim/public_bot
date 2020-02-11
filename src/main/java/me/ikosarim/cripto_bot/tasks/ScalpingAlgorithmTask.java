@@ -69,24 +69,6 @@ public class ScalpingAlgorithmTask implements Runnable {
         }));
     }
 
-    private void cancelTrendTask(TradeObject tradeObject, String trendType) {
-        ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(trendType + tradeObject.getPairName());
-        if (taskFuture != null) {
-            taskFuture.cancel(true);
-            cancelTaskOrder(taskFuture);
-            scheduledFutureMap.remove(taskFuture);
-        }
-    }
-
-    private void createNewTradeConditions(String pairName, TradeObject tradeObject) {
-        TradeObject newBorderTradeObject = sendRequestsService.sendInitGetTradesRequest(
-                pairName,
-                new CurrencyPairList(singletonList(tradeObject))
-        ).get(pairName);
-        newBorderTradeObject.setOrderBookDeltaPrice(tradeObject.getOrderBookDeltaPrice());
-        tradeObjectMap.put(pairName, newBorderTradeObject);
-    }
-
     private void workInMainCorridor(TradeObject tradeObject, Double actualPrice) {
         tradeObject.setActualTradePrice(actualPrice);
         ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(tradeObject.getPairName());
@@ -113,6 +95,24 @@ public class ScalpingAlgorithmTask implements Runnable {
         if (!orderCancelStatus.isResult()) {
 //            logging
         }
+    }
+
+    private void cancelTrendTask(TradeObject tradeObject, String trendType) {
+        ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(trendType + tradeObject.getPairName());
+        if (taskFuture != null) {
+            taskFuture.cancel(true);
+            cancelTaskOrder(taskFuture);
+            scheduledFutureMap.remove(taskFuture);
+        }
+    }
+
+    private void createNewTradeConditions(String pairName, TradeObject tradeObject) {
+        TradeObject newBorderTradeObject = sendRequestsService.sendInitGetTradesRequest(
+                pairName,
+                new CurrencyPairList(singletonList(tradeObject))
+        ).get(pairName);
+        newBorderTradeObject.setOrderBookDeltaPrice(tradeObject.getOrderBookDeltaPrice());
+        tradeObjectMap.put(pairName, newBorderTradeObject);
     }
 
     private void workInScalpingTradeCorridor(TradeObject tradeObject, Double actualPrice, boolean priceCondition,

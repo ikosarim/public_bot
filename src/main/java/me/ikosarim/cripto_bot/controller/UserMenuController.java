@@ -20,7 +20,7 @@ import java.util.Map;
 @RequestMapping("/user_menu")
 @Slf4j
 public class UserMenuController {
-    
+
     @Autowired
     WorkTaskController workTaskController;
 

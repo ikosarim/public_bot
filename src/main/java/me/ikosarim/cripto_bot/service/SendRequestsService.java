@@ -25,5 +25,7 @@ public interface SendRequestsService {
 
     Map<String, Double> sendGetTradesRequest(String pairUrl);
 
+    List<UserTradeEntity> sendGetTradeResult(Map<String, Object> tradeResultArguments);
+
     UserInfoEntity sendCheckRequest(Map<String, String> keysMap);
 }

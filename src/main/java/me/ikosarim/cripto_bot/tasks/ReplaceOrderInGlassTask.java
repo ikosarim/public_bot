@@ -1,6 +1,5 @@
 package me.ikosarim.cripto_bot.tasks;
 
-import lombok.Setter;
 import me.ikosarim.cripto_bot.containers.TradeObject;
 import me.ikosarim.cripto_bot.json_model.OpenOrderEntity;
 import me.ikosarim.cripto_bot.json_model.OrderBookEntity;
@@ -20,12 +19,12 @@ import static java.lang.Double.parseDouble;
 
 @Component
 @Scope("prototype")
-@Setter
 public class ReplaceOrderInGlassTask implements Runnable {
 
     private TradeObject tradeObject;
     private Integer orderId;
     private String tradeType;
+    private Double tradeQuantity;
 
     @Autowired
     SendRequestsService sendRequestsService;
@@ -42,6 +41,7 @@ public class ReplaceOrderInGlassTask implements Runnable {
         List<OpenOrderEntity> openOrderEntityListForCurrentPair = userOpenOrders.get(tradePairName);
         ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(tradePairName);
         if (openOrderEntityListForCurrentPair == null) {
+//            save statistic
 //            Publish that trade is complete (logging)
             cancelAndRemoveTask(taskFuture);
         }
@@ -50,8 +50,13 @@ public class ReplaceOrderInGlassTask implements Runnable {
                 .findFirst()
                 .orElse(null);
         if (openOrderEntityForThisTask == null) {
+//            save statistic
 //            Publish that trade is complete (logging)
             cancelAndRemoveTask(taskFuture);
+        }
+        if (parseDouble(openOrderEntityForThisTask.getQuantity()) < tradeQuantity) {
+            tradeQuantity = parseDouble(openOrderEntityForThisTask.getQuantity());
+//            save statistic
         }
         OrderBookEntity orderBookEntity = sendRequestsService.sendGetOrderBookRequest(tradePairName);
         Double priceInGlass;
@@ -72,32 +77,30 @@ public class ReplaceOrderInGlassTask implements Runnable {
 //            Print in telegram chat and print in log about error (logging)
             cancelAndRemoveTask(taskFuture);
         }
-        Double qty = parseDouble(openOrderEntityForThisTask.getQuantity());
-        replaceOrderToTopInGlass(priceToTrade, qty, taskFuture);
+        replaceOrderToTopInGlass(priceToTrade, taskFuture);
     }
 
-    private void replaceOrderToTopInGlass(double priceToTrade, Double qty,
-                                          ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
+    private void replaceOrderToTopInGlass(double priceToTrade, ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
         cancelOrder(taskFuture);
-        createOrder(priceToTrade, qty, taskFuture);
+        createOrder(priceToTrade, taskFuture);
     }
 
-    private void createOrder(double priceToTrade, Double qty, ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
+    private void createOrder(double priceToTrade, ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
         final Double finalPriceToTrade = priceToTrade;
         Map<String, Object> createOrderArguments = new HashMap<>() {{
             put("pair", tradeObject.getPairName());
-            put("quantity", qty);
+            put("quantity", tradeQuantity);
             put("price", finalPriceToTrade);
             put("type", tradeType);
         }};
         OrderCreateStatus orderCreateStatus = sendRequestsService.sendOrderCreateRequest(createOrderArguments);
-        if (!orderCreateStatus.isResult()){
+        if (!orderCreateStatus.isResult()) {
 //            Publish that error and error cause (logging)
             cancelAndRemoveTask(taskFuture);
         }
-        if ("buy".equals(tradeType)){
+        if ("buy".equals(tradeType)) {
             tradeObject.setOrderBookBidPrice(finalPriceToTrade);
-        } else if ("sell".equals(tradeType)){
+        } else if ("sell".equals(tradeType)) {
             tradeObject.setOrderBookAskPrice(finalPriceToTrade);
         }
         orderId = orderCreateStatus.getOrderId();
@@ -121,5 +124,18 @@ public class ReplaceOrderInGlassTask implements Runnable {
 
     public Integer getOrderId() {
         return orderId;
+    }
+
+    public void setTradeObject(TradeObject tradeObject) {
+        this.tradeObject = tradeObject;
+        this.tradeQuantity = tradeObject.getQuantity();
+    }
+
+    public void setTradeType(String tradeType) {
+        this.tradeType = tradeType;
+    }
+
+    public void setOrderId(Integer orderId) {
+        this.orderId = orderId;
     }
 }

@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Arrays.asList;
+
 @Service
 @PropertySource("application.properties")
 public class ExmoSendRequestsServiceImpl implements SendRequestsService {
@@ -157,6 +159,25 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
         ResponseEntity<OrderCreateStatus> response = privateRestTemplate.postForEntity(url, requestEntity, OrderCreateStatus.class);
 
         return response.getBody();
+    }
+
+    @Override
+    public List<UserTradeEntity> sendGetTradeResult(Map<String, Object> tradeResultArguments) {
+        String url = env.getProperty("spring.http.url.trades.result");
+        String method = url.substring(url.lastIndexOf("/") + 1);
+
+        Map<String, Object> arguments = addNonceToRequest(tradeResultArguments);
+
+        MultiValueMap<String, Object> multiValueMapArguments = new LinkedMultiValueMap<>();
+        arguments.forEach((key, value) -> multiValueMapArguments.put(key, new ArrayList<>() {{
+            add(value);
+        }}));
+
+        HttpEntity requestEntity = new HttpEntity(multiValueMapArguments, createPostRequestHeaders(method, arguments));
+
+        ResponseEntity<UserTradeEntity> response = privateRestTemplate.postForEntity(url, requestEntity, UserTradeEntity.class);
+
+        return asList(response.getBody());
     }
 
     private Map<String, Object> addNonceToRequest(Map<String, Object> arguments) {
