@@ -24,4 +24,6 @@ public interface SendRequestsService {
     OrderCreateStatus sendOrderCreateRequest(Map<String, Object> createOrderArguments);
 
     Map<String, Double> sendGetTradesRequest(String pairUrl);
+
+    UserInfoEntity sendCheckRequest(Map<String, String> keysMap);
 }
