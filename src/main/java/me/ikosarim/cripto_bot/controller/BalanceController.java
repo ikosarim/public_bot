@@ -18,14 +18,12 @@ import static java.util.stream.Collectors.toMap;
 public class BalanceController {
 
     @Autowired
-    SendRequestsService sendRequestsService;
-    @Autowired
     WorkTaskController workTaskController;
 
     @GetMapping
     public String getBalanceStatistics(Model model) {
-        UserInfoEntity userInfoEntity = sendRequestsService.sendPostUserInfoRequest();
-        model.addAttribute("userInfoEntity", clearStatistic(userInfoEntity));
+        UserInfoEntity userInfoEntity = workTaskController.getUserStatistic();
+        model.addAttribute("userInfoEntity", userInfoEntity);
         return "/statistic";
     }
 
@@ -33,24 +31,5 @@ public class BalanceController {
     public String stopWork() {
         workTaskController.stopTrade();
         return "redirect:/user_menu";
-    }
-
-    private UserInfoEntity clearStatistic(UserInfoEntity userInfoEntity) {
-        Map<String, String> balanceMap = userInfoEntity.getBalances();
-        balanceMap = balanceMap.entrySet()
-                .stream()
-                .filter(e -> !"0".equals(e.getValue()))
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-        Map<String, String> reserveMap = userInfoEntity.getReserved();
-        reserveMap = reserveMap.entrySet()
-                .stream()
-                .filter(e -> !"0".equals(e.getValue()))
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-        userInfoEntity.setBalances(balanceMap);
-        userInfoEntity.setReserved(reserveMap);
-
-        return userInfoEntity;
     }
 }

@@ -3,6 +3,7 @@ package me.ikosarim.cripto_bot.init;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
 import me.ikosarim.cripto_bot.json_model.PairSettingEntity;
+import me.ikosarim.cripto_bot.json_model.UserInfoEntity;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
 import me.ikosarim.cripto_bot.tasks.ScalpingAlgorithmTask;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import java.util.concurrent.ScheduledFuture;
 
 import static java.lang.Double.parseDouble;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toMap;
 
 @Component
 public class WorkTaskController {
@@ -60,5 +62,26 @@ public class WorkTaskController {
 
     public void stopTrade() {
         taskScheduler.shutdown();
+    }
+
+    public UserInfoEntity getUserStatistic() {
+        UserInfoEntity userInfoEntity = sendRequestsService.sendPostUserInfoRequest();
+
+        Map<String, String> balanceMap = userInfoEntity.getBalances();
+        balanceMap = balanceMap.entrySet()
+                .stream()
+                .filter(e -> !"0".equals(e.getValue()))
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        Map<String, String> reserveMap = userInfoEntity.getReserved();
+        reserveMap = reserveMap.entrySet()
+                .stream()
+                .filter(e -> !"0".equals(e.getValue()))
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        userInfoEntity.setBalances(balanceMap);
+        userInfoEntity.setReserved(reserveMap);
+
+        return userInfoEntity;
     }
 }
