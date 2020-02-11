@@ -1,5 +1,6 @@
 package me.ikosarim.cripto_bot.controller;
 
+import me.ikosarim.cripto_bot.init.WorkTaskController;
 import me.ikosarim.cripto_bot.json_model.UserInfoEntity;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,8 @@ public class BalanceController {
 
     @Autowired
     SendRequestsService sendRequestsService;
+    @Autowired
+    WorkTaskController workTaskController;
 
     @GetMapping
     public String getBalanceStatistics(Model model) {
@@ -28,6 +31,7 @@ public class BalanceController {
 
     @GetMapping(params = {"stop"})
     public String stopWork() {
+        workTaskController.stopTrade();
         return "redirect:/user_menu";
     }
 

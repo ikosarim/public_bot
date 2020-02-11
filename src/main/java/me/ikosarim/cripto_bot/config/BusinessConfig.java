@@ -36,7 +36,7 @@ public class BusinessConfig {
     }
 
     @Bean
-    public ThreadPoolTaskScheduler threadPoolTaskScheduler(){
+    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
         threadPoolTaskScheduler.setPoolSize(16);
         return threadPoolTaskScheduler;

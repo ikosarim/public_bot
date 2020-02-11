@@ -7,7 +7,9 @@ import me.ikosarim.cripto_bot.json_model.OrderCreateStatus;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Scope;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +19,8 @@ import java.util.concurrent.ScheduledFuture;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 
+@Component
+@Scope("prototype")
 public class ScalpingAlgorithmTask implements Runnable {
 
     @Autowired
