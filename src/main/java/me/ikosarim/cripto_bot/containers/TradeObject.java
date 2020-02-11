@@ -2,6 +2,9 @@ package me.ikosarim.cripto_bot.containers;
 
 import lombok.*;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -9,15 +12,19 @@ import lombok.*;
 @Builder
 public class TradeObject {
 
+    @Size(min = 5, max = 14)
     private String pairName;
 
+    @Positive
     private Double percent;
+    @Positive
+    private double quantity;
+
     private Double uppestBorder;
     private Double upperBorder;
     private Double lowerBorder;
     private Double lowestBorder;
 
-    private double quantity;
     private Double orderBookDeltaPrice;
 
     private Double tradeBuyPrice;

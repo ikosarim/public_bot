@@ -7,10 +7,7 @@ import me.ikosarim.cripto_bot.json_model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -70,6 +67,14 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
                 .toUriString();
         return jSonMappingService.convertToPairSettingEntity(publicRestTemplate.getForObject(uri, JsonNode.class));
     }
+
+    @Override
+    public UserInfoEntity sendCheckRequest(Map<String, String> keysMap) {
+        userPrivateInfoMap.putAll(keysMap);
+        return sendPostUserInfoRequest();
+    }
+
+    // TODO: 12.02.2020 Может мапа с бинами - это не бин?
 
     @Override
     public UserInfoEntity sendPostUserInfoRequest() {

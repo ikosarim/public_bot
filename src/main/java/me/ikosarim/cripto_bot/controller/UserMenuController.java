@@ -6,9 +6,15 @@ import me.ikosarim.cripto_bot.containers.TradeObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.Validator;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.Map;
 
 @Controller
@@ -18,6 +24,17 @@ public class UserMenuController {
 
     @Autowired
     Map<String, String> userPrivateInfoMap;
+
+    @Resource(name = "dataValidator")
+    private Validator dataValidator;
+
+    @Resource(name = "keysValidator")
+    private Validator keysValidator;
+
+    @InitBinder
+    protected void initBinder(WebDataBinder binder) {
+        binder.setValidator(dataValidator);
+    }
 
     @GetMapping
     public String getUserMenuPage(Model model) {
@@ -40,14 +57,20 @@ public class UserMenuController {
     }
 
     @PostMapping(params = {"start"})
-    public String startWork(@ModelAttribute CurrencyPairList currencyPairList,
+    public String startWork(@Valid @ModelAttribute CurrencyPairList currencyPairList,
                             @RequestParam(value = "key") final String key,
-                            @RequestParam(value = "secret") final String secret) {
-        if (currencyPairList.getPairList().isEmpty()) {
-            log.warn("Не выбраны валютные пары");
-            return "redirect:/user_menu";
-        }
-        initUserPrivateInfoMap(key, secret);
+                            @RequestParam(value = "secret") final String secret,
+                            BindingResult bindingResult) {
+//        if (currencyPairList.getPairList().isEmpty()) {
+//            log.warn("Не выбраны валютные пары"); // logging
+//            return "redirect:/user_menu";
+//        }
+        Map<String, String> keys = new HashMap<>() {{
+            put("key", key);
+            put("secret", secret);
+        }};
+        keysValidator.validate(keys, bindingResult);
+//        initUserPrivateInfoMap(key, secret);
         log.debug("Дергаем метод логики работы приложения");
         log.debug("Возможно добавляем редирект на страницу отображения или рисуем какой-нибудь картинку работы... или нет");
         return "redirect:/statistic";
@@ -59,4 +82,6 @@ public class UserMenuController {
     }
 
     // TODO: 19.11.2019 Добавить валидации
+
+    // TODO: 12.02.2020 https://habr.com/ru/post/424819/ 
 }
