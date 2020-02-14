@@ -1,6 +1,5 @@
 package me.ikosarim.cripto_bot.controller;
 
-import lombok.extern.slf4j.Slf4j;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
 import me.ikosarim.cripto_bot.init.WorkTaskController;
@@ -18,7 +17,6 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/user_menu")
-@Slf4j
 public class UserMenuController {
 
     @Autowired

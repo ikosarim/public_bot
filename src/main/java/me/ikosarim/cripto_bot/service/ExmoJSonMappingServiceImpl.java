@@ -22,6 +22,8 @@ import static org.springframework.data.util.StreamUtils.createStreamFromIterator
 @Service
 public class ExmoJSonMappingServiceImpl implements JSonMappingService {
 
+//     need logging
+
     @Override
     public Map<String, TradeObject> returnInitDataToTradeInMap(JsonNode node, CurrencyPairList pairList) {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -60,6 +62,7 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
         tradeObject.setLowerBorder(createLowBorder(tradeObject, 1.0));
         tradeObject.setUpperBorder(createUpBorder(tradeObject, 1.0));
         tradeObject.setUppestBorder(createUpBorder(tradeObject, 2.0));
+//         log borders of each pair
         return tradeObject;
     }
 

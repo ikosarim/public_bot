@@ -49,6 +49,7 @@ public class ScalpingAlgorithmTask implements Runnable {
     public void run() {
         Map<String, Double> actualPairTradePrice = sendRequestsService.sendGetTradesRequest(pairUrl);
         tradeObjectMap.forEach((pairName, tradeObject) -> actualPairTradePrice.forEach((name, actualPrice) -> {
+//            log pair name and trade price
             if (name.equals(pairName)) {
                 if (actualPrice > tradeObject.getUpperBorder()
                         && actualPrice < tradeObject.getUppestBorder()) {
