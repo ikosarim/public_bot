@@ -2,8 +2,7 @@ package me.ikosarim.cripto_bot.containers;
 
 import lombok.*;
 
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -12,12 +11,13 @@ import javax.validation.constraints.Size;
 @Builder
 public class TradeObject {
 
-    @Size(min = 5, max = 14)
+    @NotBlank(message = "Не введенено обозначение валютной пары")
+    @Size(min = 5, max = 14, message = "Wrong length of message")
     private String pairName;
 
-    @Positive
-    private Double percent;
-    @Positive
+    @Positive(message = "Number negative or zero")
+    private double percent;
+    @Positive(message = "Number negative or zero")
     private double quantity;
 
     private Double uppestBorder;

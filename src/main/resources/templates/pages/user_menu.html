@@ -4,13 +4,16 @@
 
     <form action="#" th:action="@{/user_menu}" th:object="${currencyPairList}" method="post">
 
+        <div align="center" class="alert alert-danger" th:if="${#fields.hasErrors('*')}">
+            <p th:each="err : ${#fields.errors('*')}" th:text="${err}"></p>
+        </div>
+
         <table>
             <thead>
                 <tr>
                     <th>Pair index</th>
                     <th>Pair Name</th>
                     <th>Quantity</th>
-                    <th>Max orders count</th>
                     <th>Percent</th>
                     <th>
                         <button type="submit" name="addPair">Add Pair</button>

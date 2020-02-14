@@ -8,7 +8,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.Validator;
-import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -25,16 +24,8 @@ public class UserMenuController {
     @Autowired
     Map<String, String> userPrivateInfoMap;
 
-    @Resource(name = "dataValidator")
-    private Validator dataValidator;
-
     @Resource(name = "keysValidator")
     private Validator keysValidator;
-
-    @InitBinder
-    protected void initBinder(WebDataBinder binder) {
-        binder.setValidator(dataValidator);
-    }
 
     @GetMapping
     public String getUserMenuPage(Model model) {
@@ -57,20 +48,18 @@ public class UserMenuController {
     }
 
     @PostMapping(params = {"start"})
-    public String startWork(@Valid @ModelAttribute CurrencyPairList currencyPairList,
+    public String startWork(@Valid @ModelAttribute CurrencyPairList currencyPairList, BindingResult bindingResult,
                             @RequestParam(value = "key") final String key,
-                            @RequestParam(value = "secret") final String secret,
-                            BindingResult bindingResult) {
-//        if (currencyPairList.getPairList().isEmpty()) {
-//            log.warn("Не выбраны валютные пары"); // logging
-//            return "redirect:/user_menu";
-//        }
+                            @RequestParam(value = "secret") final String secret) {
         Map<String, String> keys = new HashMap<>() {{
             put("key", key);
             put("secret", secret);
         }};
         keysValidator.validate(keys, bindingResult);
 //        initUserPrivateInfoMap(key, secret);
+        if (bindingResult.hasErrors()) {
+            return "/user_menu";
+        }
         log.debug("Дергаем метод логики работы приложения");
         log.debug("Возможно добавляем редирект на страницу отображения или рисуем какой-нибудь картинку работы... или нет");
         return "redirect:/statistic";
@@ -83,5 +72,5 @@ public class UserMenuController {
 
     // TODO: 19.11.2019 Добавить валидации
 
-    // TODO: 12.02.2020 https://habr.com/ru/post/424819/ 
+    // TODO: 12.02.2020 https://habr.com/ru/post/424819/
 }

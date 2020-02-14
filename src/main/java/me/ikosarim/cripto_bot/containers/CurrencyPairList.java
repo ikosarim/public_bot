@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,5 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 public class CurrencyPairList {
+    @NotEmpty(message = "Не введено ни одной валютной пары")
+    @Valid
     private List<TradeObject> pairList = new ArrayList<>();
 }
