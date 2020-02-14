@@ -24,8 +24,8 @@ import java.util.Map;
 @PropertySource("application.properties")
 public class ExmoSendRequestsServiceImpl implements SendRequestsService {
 
-    @Autowired
-    Map<String, String> userPrivateInfoMap;
+    private Map<String, String> userPrivateInfoMap = new HashMap<>();
+
     @Autowired
     private JSonMappingService jSonMappingService;
     @Autowired
@@ -73,8 +73,6 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
         userPrivateInfoMap.putAll(keysMap);
         return sendPostUserInfoRequest();
     }
-
-    // TODO: 12.02.2020 Может мапа с бинами - это не бин?
 
     @Override
     public UserInfoEntity sendPostUserInfoRequest() {

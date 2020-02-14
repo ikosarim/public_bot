@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
@@ -83,5 +85,13 @@ public class WorkTaskController {
         userInfoEntity.setReserved(reserveMap);
 
         return userInfoEntity;
+    }
+
+    public ObjectError validateUserKeys(Map<String, String> keyArgs) {
+        UserInfoEntity userInfoEntity = sendRequestsService.sendCheckRequest(keyArgs);
+        if (userInfoEntity.getUid() == null) {
+            return new ObjectError("keys map", "pair of key and secret is wrong");
+        }
+        return null;
     }
 }

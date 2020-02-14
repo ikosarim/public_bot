@@ -16,11 +16,6 @@ import java.util.concurrent.ScheduledFuture;
 public class BusinessConfig {
 
     @Bean
-    public Map<String, String> userPrivateInfoMap() {
-        return new HashMap<>();
-    }
-
-    @Bean
     public Map<String, TradeObject> tradeObjectMap() {
         return new HashMap<>();
     }

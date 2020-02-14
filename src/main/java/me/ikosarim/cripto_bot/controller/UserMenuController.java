@@ -3,14 +3,14 @@ package me.ikosarim.cripto_bot.controller;
 import lombok.extern.slf4j.Slf4j;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
+import me.ikosarim.cripto_bot.init.WorkTaskController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.Validator;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.HashMap;
@@ -20,12 +20,9 @@ import java.util.Map;
 @RequestMapping("/user_menu")
 @Slf4j
 public class UserMenuController {
-
+    
     @Autowired
-    Map<String, String> userPrivateInfoMap;
-
-    @Resource(name = "keysValidator")
-    private Validator keysValidator;
+    WorkTaskController workTaskController;
 
     @GetMapping
     public String getUserMenuPage(Model model) {
@@ -55,22 +52,13 @@ public class UserMenuController {
             put("key", key);
             put("secret", secret);
         }};
-        keysValidator.validate(keys, bindingResult);
-//        initUserPrivateInfoMap(key, secret);
+        ObjectError error = workTaskController.validateUserKeys(keys);
+        if (error != null) {
+            bindingResult.addError(error);
+        }
         if (bindingResult.hasErrors()) {
             return "/user_menu";
         }
-        log.debug("Дергаем метод логики работы приложения");
-        log.debug("Возможно добавляем редирект на страницу отображения или рисуем какой-нибудь картинку работы... или нет");
         return "redirect:/statistic";
     }
-
-    private void initUserPrivateInfoMap(String key, String secret) {
-        userPrivateInfoMap.put("key", key);
-        userPrivateInfoMap.put("secret", secret);
-    }
-
-    // TODO: 19.11.2019 Добавить валидации
-
-    // TODO: 12.02.2020 https://habr.com/ru/post/424819/
 }
