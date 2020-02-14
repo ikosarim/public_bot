@@ -1,11 +1,9 @@
 package me.ikosarim.cripto_bot.tasks;
 
 import me.ikosarim.cripto_bot.containers.TradeObject;
-import me.ikosarim.cripto_bot.json_model.OpenOrderEntity;
-import me.ikosarim.cripto_bot.json_model.OrderBookEntity;
-import me.ikosarim.cripto_bot.json_model.OrderCancelStatus;
-import me.ikosarim.cripto_bot.json_model.OrderCreateStatus;
+import me.ikosarim.cripto_bot.json_model.*;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
+import me.ikosarim.cripto_bot.service.TradeHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -16,6 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
 import static java.lang.Double.parseDouble;
+import static java.util.stream.Collectors.toList;
 
 @Component
 @Scope("prototype")
@@ -29,6 +28,8 @@ public class ReplaceOrderInGlassTask implements Runnable {
     @Autowired
     SendRequestsService sendRequestsService;
     @Autowired
+    TradeHistoryService tradeHistoryService;
+    @Autowired
     private Map<String, ScheduledFuture<ReplaceOrderInGlassTask>> scheduledFutureMap;
 
     @Override
@@ -41,7 +42,7 @@ public class ReplaceOrderInGlassTask implements Runnable {
         List<OpenOrderEntity> openOrderEntityListForCurrentPair = userOpenOrders.get(tradePairName);
         ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(tradePairName);
         if (openOrderEntityListForCurrentPair == null) {
-//            save statistic
+            saveStatisticData();
 //            Publish that trade is complete (logging)
             cancelAndRemoveTask(taskFuture);
         }
@@ -50,13 +51,14 @@ public class ReplaceOrderInGlassTask implements Runnable {
                 .findFirst()
                 .orElse(null);
         if (openOrderEntityForThisTask == null) {
-//            save statistic
+            saveStatisticData();
 //            Publish that trade is complete (logging)
             cancelAndRemoveTask(taskFuture);
         }
         if (parseDouble(openOrderEntityForThisTask.getQuantity()) < tradeQuantity) {
             tradeQuantity = parseDouble(openOrderEntityForThisTask.getQuantity());
-//            save statistic
+            saveStatisticData();
+//            publish
         }
         OrderBookEntity orderBookEntity = sendRequestsService.sendGetOrderBookRequest(tradePairName);
         Double priceInGlass;
@@ -78,6 +80,19 @@ public class ReplaceOrderInGlassTask implements Runnable {
             cancelAndRemoveTask(taskFuture);
         }
         replaceOrderToTopInGlass(priceToTrade, taskFuture);
+    }
+
+    private void saveStatisticData() {
+        Map<String, Object> userTradesMap = new HashMap<>() {{
+            put("pair", tradeObject.getPairName());
+            put("limit", 5);
+            put("offset", 0);
+        }};
+        List<UserTradeEntity> userTradeEntityList = sendRequestsService.sendGetTradeResult(userTradesMap);
+        userTradeEntityList = userTradeEntityList.stream()
+                .filter(ut -> orderId.equals(ut.getOrderId()))
+                .collect(toList());
+        userTradeEntityList.forEach(ut -> tradeHistoryService.saveTrade(ut));
     }
 
     private void replaceOrderToTopInGlass(double priceToTrade, ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
