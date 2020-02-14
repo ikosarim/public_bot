@@ -59,6 +59,7 @@ public class UserMenuController {
         if (bindingResult.hasErrors()) {
             return "/user_menu";
         }
+        workTaskController.startTrade(currencyPairList);
         return "redirect:/statistic";
     }
 }
