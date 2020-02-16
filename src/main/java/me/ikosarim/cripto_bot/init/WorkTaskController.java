@@ -6,6 +6,8 @@ import me.ikosarim.cripto_bot.json_model.PairSettingEntity;
 import me.ikosarim.cripto_bot.json_model.UserInfoEntity;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
 import me.ikosarim.cripto_bot.tasks.ScalpingAlgorithmTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -21,7 +23,7 @@ import static java.util.stream.Collectors.toMap;
 @Component
 public class WorkTaskController {
 
-//    need logging
+    Logger logger = LoggerFactory.getLogger(WorkTaskController.class);
 
     @Autowired
     private SendRequestsService sendRequestsService;
@@ -44,6 +46,7 @@ public class WorkTaskController {
                 .stream()
                 .map(TradeObject::getPairName)
                 .collect(joining(","));
+        logger.info("Start trade, trade pairs are - " + pairsUrl);
         tradeObjectMap.putAll(sendRequestsService.sendInitGetTradesRequest(pairsUrl, pairList));
         pairSettingEntityMap.putAll(sendRequestsService.sendGetPairSettingsRequest());
         tradeObjectMap.forEach((key, value) -> value.setOrderBookDeltaPrice(
@@ -56,10 +59,12 @@ public class WorkTaskController {
         ScalpingAlgorithmTask scalpingAlgorithmTask = ctx.getBean(ScalpingAlgorithmTask.class);
         scalpingAlgorithmTask.setPairUrl(pairsUrl);
         taskScheduler.scheduleWithFixedDelay(scalpingAlgorithmTask, 2000);
+        logger.info("Create and start scalping algorithm task");
     }
 
     public void stopTrade() {
         taskScheduler.shutdown();
+        logger.info("Shutdown thread pool task scheduler");
     }
 
     public UserInfoEntity getUserStatistic() {
@@ -80,12 +85,15 @@ public class WorkTaskController {
         userInfoEntity.setBalances(balanceMap);
         userInfoEntity.setReserved(reserveMap);
 
+        logger.info("Return user info");
+
         return userInfoEntity;
     }
 
     public ObjectError validateUserKeys(Map<String, String> keyArgs) {
         UserInfoEntity userInfoEntity = sendRequestsService.sendCheckRequest(keyArgs);
         if (userInfoEntity.getUid() == null) {
+            logger.error("Bad pair key - secret");
             return new ObjectError("keys map", "pair of key and secret is wrong");
         }
         return null;
