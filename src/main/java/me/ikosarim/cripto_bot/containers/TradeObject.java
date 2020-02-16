@@ -12,11 +12,11 @@ import javax.validation.constraints.*;
 public class TradeObject {
 
     @NotBlank(message = "Не введенено обозначение валютной пары")
-    @Size(min = 5, max = 14, message = "Wrong length of message")
+    @Size(min = 2, max = 5, message = "Wrong length of message")
     private String pairName;
 
     @Positive(message = "Number negative or zero")
-    private double percent;
+    private double sizeOfCorridor;
     @Positive(message = "Number negative or zero")
     private double quantity;
 
