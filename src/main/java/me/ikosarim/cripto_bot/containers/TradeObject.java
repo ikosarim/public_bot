@@ -16,7 +16,7 @@ public class TradeObject {
     private String pairName;
 
     @Positive(message = "Number negative or zero")
-    private double percent;
+    private double sizeOfCorridor;
     @Positive(message = "Number negative or zero")
     private double quantity;
 

@@ -140,10 +140,10 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
     }
 
     private Double createLowBorder(TradeObject tradeObject, double v) {
-        return ((tradeObject.getTradeBuyPrice() + tradeObject.getTradeSellPrice()) / 2) * (1.0 - tradeObject.getPercent() * v / 100);
+        return ((tradeObject.getTradeBuyPrice() + tradeObject.getTradeSellPrice()) / 2)  - tradeObject.getSizeOfCorridor() * v;
     }
 
     private Double createUpBorder(TradeObject tradeObject, double v) {
-        return ((tradeObject.getTradeBuyPrice() + tradeObject.getTradeSellPrice()) / 2) * (1.0 + tradeObject.getPercent() * v / 100);
+        return ((tradeObject.getTradeBuyPrice() + tradeObject.getTradeSellPrice()) / 2) + tradeObject.getSizeOfCorridor() * v;
     }
 }
