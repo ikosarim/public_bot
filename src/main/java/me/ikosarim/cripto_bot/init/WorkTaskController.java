@@ -10,11 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
-import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 
 import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
 
 import static java.lang.Double.parseDouble;
 import static java.util.stream.Collectors.joining;
@@ -33,8 +31,6 @@ public class WorkTaskController {
     private ThreadPoolTaskScheduler taskScheduler;
     @Autowired
     private ApplicationContext ctx;
-
-    private ScheduledFuture<ScalpingAlgorithmTask> scalpingAlgorithmTaskScheduledFuture;
 
     public void startTrade(CurrencyPairList pairList) {
         for (TradeObject tradeObject : pairList.getPairList()) {
@@ -56,10 +52,8 @@ public class WorkTaskController {
                         .orElseThrow()
         ));
         ScalpingAlgorithmTask scalpingAlgorithmTask = ctx.getBean(ScalpingAlgorithmTask.class);
-        scalpingAlgorithmTaskScheduledFuture
-                = (ScheduledFuture<ScalpingAlgorithmTask>) taskScheduler.scheduleWithFixedDelay(
-                scalpingAlgorithmTask, 2000
-        );
+        scalpingAlgorithmTask.setPairUrl(pairsUrl);
+        taskScheduler.scheduleWithFixedDelay(scalpingAlgorithmTask, 2000);
     }
 
     public void stopTrade() {

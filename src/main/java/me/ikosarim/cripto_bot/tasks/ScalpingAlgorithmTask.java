@@ -5,6 +5,7 @@ import me.ikosarim.cripto_bot.containers.TradeObject;
 import me.ikosarim.cripto_bot.json_model.OrderCancelStatus;
 import me.ikosarim.cripto_bot.json_model.OrderCreateStatus;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
@@ -17,11 +18,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.joining;
 
 @Component
 @Scope("prototype")
 public class ScalpingAlgorithmTask implements Runnable {
+
+    private String pairUrl;
+
+    public void setPairUrl(String pairUrl) {
+        this.pairUrl = pairUrl;
+    }
 
     @Autowired
     private Map<String, TradeObject> tradeObjectMap;
@@ -31,12 +37,13 @@ public class ScalpingAlgorithmTask implements Runnable {
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
     @Autowired
     private Map<String, ScheduledFuture<ReplaceOrderInGlassTask>> scheduledFutureMap;
-    @Autowired
+
     private ApplicationContext ctx;
 
-    private String pairUrl = tradeObjectMap.values()
-            .stream().map(TradeObject::getPairName)
-            .collect(joining());
+    @Autowired
+    public void setApplicationContext(ApplicationContext ctx) throws BeansException {
+        this.ctx = ctx;
+    }
 
     @Override
     public void run() {
