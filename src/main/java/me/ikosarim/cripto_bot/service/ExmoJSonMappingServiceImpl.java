@@ -3,6 +3,7 @@ package me.ikosarim.cripto_bot.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
 import me.ikosarim.cripto_bot.json_model.OpenOrderEntity;
@@ -10,19 +11,15 @@ import me.ikosarim.cripto_bot.json_model.PairSettingEntity;
 import me.ikosarim.cripto_bot.json_model.TradeInfoEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.Double.parseDouble;
 import static java.util.stream.Collectors.toList;
 import static org.springframework.data.util.StreamUtils.createStreamFromIterator;
 
+@Slf4j
 @Service
 public class ExmoJSonMappingServiceImpl implements JSonMappingService {
-
-//     need logging
 
     @Override
     public Map<String, TradeObject> returnInitDataToTradeInMap(JsonNode node, CurrencyPairList pairList) {
@@ -36,6 +33,7 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
                             getTradeObject(entry.getValue(), objectMapper, pairList, name)
                     );
                 });
+        log.info("Convert init data to tradeObjectMap");
         return tradeObjectMap;
     }
 
@@ -44,7 +42,8 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
             try {
                 return objectMapper.treeToValue(el, TradeInfoEntity.class);
             } catch (JsonProcessingException e){
-                e.printStackTrace();
+                log.error("Error in map TradeInfoEntity to TradeObject with pair - " + name);
+                log.error(Arrays.toString(e.getStackTrace()));
             }
             return null;
         }).collect(toList());
@@ -58,11 +57,16 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
         tradeObject.setTradeBuyPrice(parseDouble(buyTradeInfo.getPrice()));
         tradeObject.setTradeSellPrice(parseDouble(sellTradeInfo.getPrice()));
         tradeObject.setActualTradePrice(parseDouble(buyTradeInfo.getPrice()) + parseDouble(sellTradeInfo.getPrice()) / 2);
-        tradeObject.setLowestBorder(createLowBorder(tradeObject, 2.0));
-        tradeObject.setLowerBorder(createLowBorder(tradeObject, 1.0));
-        tradeObject.setUpperBorder(createUpBorder(tradeObject, 1.0));
-        tradeObject.setUppestBorder(createUpBorder(tradeObject, 2.0));
-//         log borders of each pair
+        Double lowestBorder = createLowBorder(tradeObject, 2.0);
+        tradeObject.setLowestBorder(lowestBorder);
+        Double lowBorder = createLowBorder(tradeObject, 1.0);
+        tradeObject.setLowerBorder(lowBorder);
+        Double upBorder = createUpBorder(tradeObject, 1.0);
+        tradeObject.setUpperBorder(upBorder);
+        Double uppestBorder = createUpBorder(tradeObject, 2.0);
+        tradeObject.setUppestBorder(uppestBorder);
+        log.info("Pair - " + name + "; borders are: lowest - " + lowestBorder + ", low - " + lowBorder +
+                ", high - " + upBorder + ", uppest - " + uppestBorder);
         return tradeObject;
     }
 
@@ -93,7 +97,8 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
             try {
                 return objectMapper.treeToValue(el, TradeInfoEntity.class);
             } catch (JsonProcessingException e){
-                e.printStackTrace();
+                log.error("Error in convert trade pair to price map in pair - " + el.toString());
+                log.error(Arrays.toString(e.getStackTrace()));
             }
             return null;
         }).findFirst().orElseThrow();
@@ -112,7 +117,8 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
                         objectMapper.treeToValue(entry.getValue(), PairSettingEntity.class)
                 );
             } catch (JsonProcessingException e){
-                e.printStackTrace();
+                log.error("Error in convert trade pairSetting to entity in pair - " + entry.toString());
+                log.error(Arrays.toString(e.getStackTrace()));
             }
         });
         return pairSettingEntityMap;
@@ -132,7 +138,8 @@ public class ExmoJSonMappingServiceImpl implements JSonMappingService {
                                     try {
                                         add(objectMapper.treeToValue(el, OpenOrderEntity.class));
                                     } catch (JsonProcessingException e) {
-                                        e.printStackTrace();
+                                        log.error("Error in convert open orders to entity in pair - " + el.toString());
+                                        log.error(Arrays.toString(e.getStackTrace()));
                                     }
                                 }
                         );

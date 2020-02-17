@@ -1,5 +1,6 @@
 package me.ikosarim.cripto_bot.tasks;
 
+import lombok.extern.slf4j.Slf4j;
 import me.ikosarim.cripto_bot.db_model.AllStatisticEntity;
 import me.ikosarim.cripto_bot.json_model.UserInfoEntity;
 import me.ikosarim.cripto_bot.repos.AllStatisticRepository;
@@ -16,6 +17,7 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Service
 @Transactional
 public class SaveStatisticTask {
@@ -50,6 +52,7 @@ public class SaveStatisticTask {
                     .openOrdersQuantity(qty.getSecond())
                     .build();
             allStatisticRepository.save(entity);
+            log.info("Saved statistic");
         });
     }
 }

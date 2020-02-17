@@ -12,14 +12,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class UrlAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
-    Logger logger = LoggerFactory.getLogger(UrlAuthenticationSuccessHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(UrlAuthenticationSuccessHandler.class);
 
     private RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        logger.info("Redirect to /user_menu");
+        logger.info("Log in successful! Redirect to /user_menu");
         redirectStrategy.sendRedirect(request, response, "/user_menu");
     }
 

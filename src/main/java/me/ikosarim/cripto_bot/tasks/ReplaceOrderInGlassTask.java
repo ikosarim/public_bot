@@ -1,5 +1,6 @@
 package me.ikosarim.cripto_bot.tasks;
 
+import lombok.extern.slf4j.Slf4j;
 import me.ikosarim.cripto_bot.containers.TradeObject;
 import me.ikosarim.cripto_bot.json_model.*;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
@@ -16,6 +17,7 @@ import java.util.concurrent.ScheduledFuture;
 import static java.lang.Double.parseDouble;
 import static java.util.stream.Collectors.toList;
 
+@Slf4j
 @Component
 @Scope("prototype")
 public class ReplaceOrderInGlassTask implements Runnable {
@@ -23,6 +25,7 @@ public class ReplaceOrderInGlassTask implements Runnable {
     private TradeObject tradeObject;
     private Integer orderId;
     private String tradeType;
+    private String trendType;
     private Double tradeQuantity;
 
     @Autowired
@@ -34,16 +37,19 @@ public class ReplaceOrderInGlassTask implements Runnable {
 
     @Override
     public void run() {
-        while (tradeObject == null || orderId == null || tradeType == null) {
+        String tradePairName = trendType + tradeObject.getPairName();
+        log.info("Replace order in glass for trade - " + tradePairName);
+        while (tradeObject == null || orderId == null || tradeType == null || trendType == null) {
+            log.warn("Not set one of fields: tradeObject - " + tradeObject + ", orderId - " + orderId + ", tradeType - "
+                    + tradeType + ", trendType - " + tradeType + " for trade - " + tradePairName);
             return;
         }
         Map<String, List<OpenOrderEntity>> userOpenOrders = sendRequestsService.sendGetOpenOrders();
-        String tradePairName = tradeObject.getPairName();
-        List<OpenOrderEntity> openOrderEntityListForCurrentPair = userOpenOrders.get(tradePairName);
+        List<OpenOrderEntity> openOrderEntityListForCurrentPair = userOpenOrders.get(tradeObject.getPairName());
         ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(tradePairName);
         if (openOrderEntityListForCurrentPair == null) {
-            saveStatisticData();
-//            Publish that trade is complete (logging)
+            log.info("No open orders, trade is complete");
+            saveStatisticData(tradePairName);
             cancelAndRemoveTask(taskFuture);
         }
         OpenOrderEntity openOrderEntityForThisTask = openOrderEntityListForCurrentPair.stream()
@@ -51,14 +57,14 @@ public class ReplaceOrderInGlassTask implements Runnable {
                 .findFirst()
                 .orElse(null);
         if (openOrderEntityForThisTask == null) {
-            saveStatisticData();
-//            Publish that trade is complete (logging)
+            log.info("No open orders for pair - " + tradePairName + ", trade is complete");
+            saveStatisticData(tradePairName);
             cancelAndRemoveTask(taskFuture);
         }
         if (parseDouble(openOrderEntityForThisTask.getQuantity()) < tradeQuantity) {
             tradeQuantity = parseDouble(openOrderEntityForThisTask.getQuantity());
-            saveStatisticData();
-//            publish
+            log.info("Trade is complete partly for " + tradePairName + ", current quantity - " + tradeQuantity);
+            saveStatisticData(tradePairName);
         }
         OrderBookEntity orderBookEntity = sendRequestsService.sendGetOrderBookRequest(tradePairName);
         Double priceInGlass;
@@ -76,15 +82,16 @@ public class ReplaceOrderInGlassTask implements Runnable {
             priceInGlass = parseDouble(orderBookEntity.getAsk()[0][0]);
             priceToTrade = priceInGlass - tradeObject.getOrderBookDeltaPrice();
         } else {
-//            Print in telegram chat and print in log about error (logging)
+            log.error("For " + tradePairName + " wrong trade type - " + tradeType);
             cancelAndRemoveTask(taskFuture);
         }
         replaceOrderToTopInGlass(priceToTrade, taskFuture);
     }
 
-    private void saveStatisticData() {
+    private void saveStatisticData(String name) {
+        log.info("Save trade for " + name);
         Map<String, Object> userTradesMap = new HashMap<>() {{
-            put("pair", tradeObject.getPairName());
+            put("pair", name);
             put("limit", 5);
             put("offset", 0);
         }};
@@ -96,6 +103,7 @@ public class ReplaceOrderInGlassTask implements Runnable {
     }
 
     private void replaceOrderToTopInGlass(double priceToTrade, ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
+        log.info("Ready for replace order for " + trendType + tradeObject.getPairName() + ", price to trade - " + priceToTrade);
         cancelOrder(taskFuture);
         createOrder(priceToTrade, taskFuture);
     }
@@ -110,7 +118,8 @@ public class ReplaceOrderInGlassTask implements Runnable {
         }};
         OrderCreateStatus orderCreateStatus = sendRequestsService.sendOrderCreateRequest(createOrderArguments);
         if (!orderCreateStatus.isResult()) {
-//            Publish that error and error cause (logging)
+            log.error("Error in creating order for - " + trendType + tradeObject.getPairName() + ", need to cancel");
+            log.error(orderCreateStatus.getError());
             cancelAndRemoveTask(taskFuture);
         }
         if ("buy".equals(tradeType)) {
@@ -119,6 +128,7 @@ public class ReplaceOrderInGlassTask implements Runnable {
             tradeObject.setOrderBookAskPrice(finalPriceToTrade);
         }
         orderId = orderCreateStatus.getOrderId();
+        log.info("Order for - " + trendType + tradeObject.getPairName() + " create successful, order id - " + orderId);
     }
 
     private void cancelOrder(ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
@@ -127,12 +137,15 @@ public class ReplaceOrderInGlassTask implements Runnable {
         }};
         OrderCancelStatus orderCancelStatus = sendRequestsService.sendOrderCancelRequest(cancelOrderArguments);
         if (!orderCancelStatus.isResult()) {
-//            Publish that error and error cause (logging)
+            log.error("Error in cancelling order for - " + trendType + tradeObject.getPairName() + ", need to cancel task");
+            log.error(orderCancelStatus.getError());
             cancelAndRemoveTask(taskFuture);
         }
+        log.info("Order for - " + trendType + tradeObject.getPairName() + " successful cancel");
     }
 
     private void cancelAndRemoveTask(ScheduledFuture<ReplaceOrderInGlassTask> taskFuture) {
+        log.info("Cancel and remove task in replace order in glass task for " + trendType + tradeObject.getPairName());
         taskFuture.cancel(true);
         scheduledFutureMap.remove(taskFuture);
     }
@@ -152,5 +165,9 @@ public class ReplaceOrderInGlassTask implements Runnable {
 
     public void setOrderId(Integer orderId) {
         this.orderId = orderId;
+    }
+
+    public void setTrendType(String trendType) {
+        this.trendType = trendType;
     }
 }

@@ -18,7 +18,7 @@ import static org.apache.commons.codec.binary.Hex.encodeHexString;
 @Service
 public class ExmoCreateSignServiceImpl implements CreateSignService {
 
-    Logger logger = LoggerFactory.getLogger(ExmoCreateSignServiceImpl.class);
+    private Logger logger = LoggerFactory.getLogger(ExmoCreateSignServiceImpl.class);
 
     @Override
     public String createSign(String method, String secret, Map<String, Object> arguments) {

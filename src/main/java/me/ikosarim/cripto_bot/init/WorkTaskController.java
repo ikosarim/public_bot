@@ -23,7 +23,7 @@ import static java.util.stream.Collectors.toMap;
 @Component
 public class WorkTaskController {
 
-    Logger logger = LoggerFactory.getLogger(WorkTaskController.class);
+    private Logger logger = LoggerFactory.getLogger(WorkTaskController.class);
 
     @Autowired
     private SendRequestsService sendRequestsService;
@@ -56,6 +56,7 @@ public class WorkTaskController {
                         .findFirst()
                         .orElseThrow()
         ));
+        logger.info("TradeObjectMap is full");
         ScalpingAlgorithmTask scalpingAlgorithmTask = ctx.getBean(ScalpingAlgorithmTask.class);
         scalpingAlgorithmTask.setPairUrl(pairsUrl);
         taskScheduler.scheduleWithFixedDelay(scalpingAlgorithmTask, 2000);
@@ -65,6 +66,7 @@ public class WorkTaskController {
     public void stopTrade() {
         taskScheduler.shutdown();
         logger.info("Shutdown thread pool task scheduler");
+        logger.info("Stop trade");
     }
 
     public UserInfoEntity getUserStatistic() {
@@ -85,7 +87,7 @@ public class WorkTaskController {
         userInfoEntity.setBalances(balanceMap);
         userInfoEntity.setReserved(reserveMap);
 
-        logger.info("Return user info");
+        logger.info("Show user info");
 
         return userInfoEntity;
     }
