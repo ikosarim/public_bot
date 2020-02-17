@@ -56,6 +56,7 @@ public class WorkTaskController {
                         .orElseThrow()
         ));
         ScalpingAlgorithmTask scalpingAlgorithmTask = ctx.getBean(ScalpingAlgorithmTask.class);
+        scalpingAlgorithmTask.setPairUrl(pairsUrl);
         scalpingAlgorithmTaskScheduledFuture
                 = (ScheduledFuture<ScalpingAlgorithmTask>) taskScheduler.scheduleWithFixedDelay(
                 scalpingAlgorithmTask, 2000
