@@ -5,16 +5,17 @@ import me.ikosarim.cripto_bot.containers.TradeObject;
 import me.ikosarim.cripto_bot.json_model.PairSettingEntity;
 import me.ikosarim.cripto_bot.json_model.UserInfoEntity;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
+import me.ikosarim.cripto_bot.tasks.ReplaceOrderInGlassTask;
 import me.ikosarim.cripto_bot.tasks.ScalpingAlgorithmTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.ObjectError;
 
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 
 import static java.lang.Double.parseDouble;
 import static java.util.stream.Collectors.joining;
@@ -25,16 +26,26 @@ public class WorkTaskController {
 
     private Logger logger = LoggerFactory.getLogger(WorkTaskController.class);
 
+    private ScheduledFuture<ScalpingAlgorithmTask> scalpingAlgorithmFuture;
+
+    public ScheduledFuture<ScalpingAlgorithmTask> getScalpingAlgorithmFuture() {
+        return scalpingAlgorithmFuture;
+    }
+
     @Autowired
     private SendRequestsService sendRequestsService;
+
     @Autowired
     private Map<String, TradeObject> tradeObjectMap;
     @Autowired
     private Map<String, PairSettingEntity> pairSettingEntityMap;
     @Autowired
+    private Map<String, ScheduledFuture<ReplaceOrderInGlassTask>> scheduledFutureMap;
+
+    @Autowired
     private ThreadPoolTaskScheduler taskScheduler;
     @Autowired
-    private ApplicationContext ctx;
+    private ScalpingAlgorithmTask scalpingAlgorithmTask;
 
     public void startTrade(CurrencyPairList pairList) {
         for (TradeObject tradeObject : pairList.getPairList()) {
@@ -57,15 +68,22 @@ public class WorkTaskController {
                         .orElseThrow()
         ));
         logger.info("TradeObjectMap is full");
-        ScalpingAlgorithmTask scalpingAlgorithmTask = ctx.getBean(ScalpingAlgorithmTask.class);
         scalpingAlgorithmTask.setPairUrl(pairsUrl);
-        taskScheduler.scheduleWithFixedDelay(scalpingAlgorithmTask, 2000);
+        scalpingAlgorithmFuture = (ScheduledFuture<ScalpingAlgorithmTask>) taskScheduler.scheduleWithFixedDelay(scalpingAlgorithmTask, 2000);
         logger.info("Create and start scalping algorithm task");
     }
 
     public void stopTrade() {
-        taskScheduler.shutdown();
-        logger.info("Shutdown thread pool task scheduler");
+        tradeObjectMap.forEach((k, v) -> tradeObjectMap.remove(v));
+        pairSettingEntityMap.forEach((k, v) -> pairSettingEntityMap.remove(v));
+        logger.info("Clean all bean maps");
+        scheduledFutureMap.forEach((k, v) -> {
+                    v.cancel(true);
+                    scheduledFutureMap.remove(v);
+                }
+        );
+        scalpingAlgorithmFuture.cancel(true);
+        logger.info("Stop all tasks and remove from task map");
         logger.info("Stop trade");
     }
 

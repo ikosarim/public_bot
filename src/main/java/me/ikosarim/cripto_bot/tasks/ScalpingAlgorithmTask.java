@@ -9,7 +9,6 @@ import me.ikosarim.cripto_bot.service.SendRequestsService;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Scope;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +22,6 @@ import static java.util.Collections.singletonList;
 
 @Slf4j
 @Component
-@Scope("prototype")
 public class ScalpingAlgorithmTask implements Runnable {
 
     private String pairUrl;
@@ -33,9 +31,11 @@ public class ScalpingAlgorithmTask implements Runnable {
     }
 
     @Autowired
-    private Map<String, TradeObject> tradeObjectMap;
-    @Autowired
     private SendRequestsService sendRequestsService;
+
+    @Autowired
+    private Map<String, TradeObject> tradeObjectMap;
+
     @Autowired
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
     @Autowired
@@ -85,7 +85,7 @@ public class ScalpingAlgorithmTask implements Runnable {
         }));
     }
 
-    private void  workInMainCorridor(TradeObject tradeObject, Double actualPrice) {
+    private void workInMainCorridor(TradeObject tradeObject, Double actualPrice) {
         tradeObject.setActualTradePrice(actualPrice);
         log.info("Actual price for pair - " + tradeObject.getPairName() + ", - " + actualPrice);
         ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(tradeObject.getPairName());
@@ -123,7 +123,7 @@ public class ScalpingAlgorithmTask implements Runnable {
             taskFuture.cancel(true);
             cancelTaskOrder(taskFuture);
             scheduledFutureMap.remove(taskFuture);
-            log.info("Cancel trend task, name - "  + trendType + tradeObject.getPairName());
+            log.info("Cancel trend task, name - " + trendType + tradeObject.getPairName());
         }
     }
 

@@ -3,6 +3,7 @@ package me.ikosarim.cripto_bot.controller;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
 import me.ikosarim.cripto_bot.init.WorkTaskController;
+import me.ikosarim.cripto_bot.tasks.ScalpingAlgorithmTask;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 
 @Controller
 @RequestMapping("/user_menu")
@@ -24,8 +26,13 @@ public class UserMenuController {
 
     @GetMapping
     public String getUserMenuPage(Model model) {
-        model.addAttribute("currencyPairList", new CurrencyPairList());
-        return "/user_menu";
+        ScheduledFuture<ScalpingAlgorithmTask> scalpingAlgorithmFuture = workTaskController.getScalpingAlgorithmFuture();
+        if (scalpingAlgorithmFuture == null
+                || scalpingAlgorithmFuture.isCancelled()) {
+            model.addAttribute("currencyPairList", new CurrencyPairList());
+            return "/user_menu";
+        }
+        return "redirect:/statistic";
     }
 
     @PostMapping(params = {"addPair"})
