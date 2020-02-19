@@ -15,5 +15,5 @@ public class OrderCreateStatus {
     @JsonProperty(value = "error")
     private String error;
     @JsonProperty(value = "order_id")
-    private Integer orderId;
+    private Long orderId;
 }

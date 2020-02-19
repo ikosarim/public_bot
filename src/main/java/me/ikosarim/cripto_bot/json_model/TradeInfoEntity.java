@@ -13,7 +13,7 @@ import java.sql.Timestamp;
 public class TradeInfoEntity {
 
     @JsonProperty(value = "trade_id")
-    private Integer tradeId;
+    private Long tradeId;
     @JsonProperty(value = "type")
     private String type;
     @JsonProperty(value = "quantity")

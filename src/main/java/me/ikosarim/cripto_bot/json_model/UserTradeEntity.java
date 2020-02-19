@@ -11,7 +11,7 @@ import lombok.*;
 public class UserTradeEntity {
 
     @JsonProperty(value = "trade_id")
-    private Integer tradeId;
+    private Long tradeId;
     @JsonProperty(value = "date")
     private Long date;
     @JsonProperty(value = "type")
@@ -19,7 +19,7 @@ public class UserTradeEntity {
     @JsonProperty(value = "pair")
     private String pair;
     @JsonProperty(value = "order_id")
-    private Integer orderId;
+    private Long orderId;
     @JsonProperty(value = "quantity")
     private double quantity;
     @JsonProperty(value = "price")

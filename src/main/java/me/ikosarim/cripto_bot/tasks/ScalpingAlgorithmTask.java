@@ -149,10 +149,10 @@ public class ScalpingAlgorithmTask implements Runnable {
         log.info("Actual price for pair - " + tradeObject.getPairName() + ", - " + actualPrice);
     }
 
-    private Integer createOrderForTrade(TradeObject tradeObject, Double actualPrice, String tradeType, String trendType,
+    private Long createOrderForTrade(TradeObject tradeObject, Double actualPrice, String tradeType, String trendType,
                                         boolean isSell, boolean isBuy) {
         log.info("Need to create order for trade, name " + tradeObject.getPairName() + ", type - " + trendType + tradeType);
-        Integer orderId = createOrder(tradeObject, actualPrice, tradeType);
+        Long orderId = createOrder(tradeObject, actualPrice, tradeType);
         if (orderId != null) {
             ReplaceOrderInGlassTask task = ctx.getBean(ReplaceOrderInGlassTask.class);
             task.setOrderId(orderId);
@@ -170,11 +170,11 @@ public class ScalpingAlgorithmTask implements Runnable {
         return orderId;
     }
 
-    private Integer createOrder(TradeObject tradeObject, Double actualPrice, String orderType) {
+    private Long createOrder(TradeObject tradeObject, Double actualPrice, String orderType) {
         final Double finalPriceToTrade = actualPrice;
         Map<String, Object> createOrderArguments = new HashMap<>() {{
             put("pair", tradeObject.getPairName());
-            put("quantity", tradeObject.getQuantity());
+            put("quantity", "buy".equals(orderType) ? tradeObject.getQuantity() + 0.1 * tradeObject.getQuantity() : tradeObject.getQuantity());
             put("price", finalPriceToTrade);
             put("type", orderType);
         }};
