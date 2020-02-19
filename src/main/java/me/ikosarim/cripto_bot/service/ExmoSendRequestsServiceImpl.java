@@ -1,27 +1,30 @@
 package me.ikosarim.cripto_bot.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
 import me.ikosarim.cripto_bot.containers.CurrencyPairList;
 import me.ikosarim.cripto_bot.containers.TradeObject;
 import me.ikosarim.cripto_bot.json_model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Arrays.asList;
 
+@Slf4j
 @Service
 @PropertySource("application.properties")
 public class ExmoSendRequestsServiceImpl implements SendRequestsService {
@@ -156,7 +159,18 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
 
         HttpEntity requestEntity = new HttpEntity(multiValueMapArguments, createPostRequestHeaders(method, arguments));
 
-        ResponseEntity<OrderCreateStatus> response = privateRestTemplate.postForEntity(url, requestEntity, OrderCreateStatus.class);
+        ResponseEntity<OrderCreateStatus> response;
+        try {
+            response = privateRestTemplate.postForEntity(url, requestEntity, OrderCreateStatus.class);
+        } catch (RestClientException e) {
+            log.error("Exception in send create order request or in mapping to OrderCreateStatus");
+            log.error(Arrays.toString(e.getStackTrace()));
+            return OrderCreateStatus.builder()
+                    .orderId(null)
+                    .error(e.getMessage())
+                    .result(false)
+                    .build();
+        }
 
         return response.getBody();
     }

@@ -23,7 +23,7 @@ import static java.util.stream.Collectors.toList;
 public class ReplaceOrderInGlassTask implements Runnable {
 
     private TradeObject tradeObject;
-    private Integer orderId;
+    private Long orderId;
     private String tradeType;
     private String trendType;
     private Double tradeQuantity;
@@ -150,7 +150,7 @@ public class ReplaceOrderInGlassTask implements Runnable {
         scheduledFutureMap.remove(taskFuture);
     }
 
-    public Integer getOrderId() {
+    public Long getOrderId() {
         return orderId;
     }
 
@@ -163,7 +163,7 @@ public class ReplaceOrderInGlassTask implements Runnable {
         this.tradeType = tradeType;
     }
 
-    public void setOrderId(Integer orderId) {
+    public void setOrderId(Long orderId) {
         this.orderId = orderId;
     }
 

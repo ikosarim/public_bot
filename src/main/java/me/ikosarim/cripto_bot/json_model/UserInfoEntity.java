@@ -14,7 +14,7 @@ import java.util.Map;
 public class UserInfoEntity {
 
     @JsonProperty(value = "uid")
-    private Integer uid;
+    private Long uid;
     @JsonProperty(value = "server_date")
     private Timestamp serverDate;
     @JsonProperty(value = "balances")
