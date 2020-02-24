@@ -22,8 +22,8 @@ import java.util.Properties;
 
 @Configuration
 @EnableTransactionManagement
-@PropertySource("application.properties")
 @EnableJpaRepositories(basePackages = "me.ikosarim.cripto_bot.repos")
+@PropertySource("application.properties")
 public class DatabaseConfig {
 
     private static Logger logger = LoggerFactory.getLogger(DatabaseConfig.class);

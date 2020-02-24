@@ -23,7 +23,7 @@ public interface SendRequestsService {
 
     OrderCreateStatus sendOrderCreateRequest(Map<String, Object> createOrderArguments);
 
-    Map<String, Double> sendGetTradesRequest(String pairUrl);
+    Map<String, Map<String, Double>> sendGetTradesRequest(String pairUrl);
 
     List<UserTradeEntity> sendGetTradeResult(Map<String, Object> tradeResultArguments);
 

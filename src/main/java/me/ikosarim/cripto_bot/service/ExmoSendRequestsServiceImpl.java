@@ -50,17 +50,17 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
 
     @Override
     public Map<String, TradeObject> sendInitGetTradesRequest(String pairs, CurrencyPairList pairList) {
-        return jSonMappingService.returnInitDataToTradeInMap(sendGetTradesRequestAndReturnNodeResult(pairs, 15), pairList);
+        return jSonMappingService.returnInitDataToTradeInMap(sendGetTradesRequestAndReturnNodeResult(pairs), pairList);
     }
 
     @Override
-    public Map<String, Double> sendGetTradesRequest(String pairUrl) {
-        return jSonMappingService.returnDataToTradeInMap(sendGetTradesRequestAndReturnNodeResult(pairUrl, 1));
+    public Map<String, Map<String, Double>> sendGetTradesRequest(String pairUrl) {
+        return jSonMappingService.returnDataToTradeInMap(sendGetTradesRequestAndReturnNodeResult(pairUrl));
     }
 
-    private JsonNode sendGetTradesRequestAndReturnNodeResult(String pairs, int i) {
+    private JsonNode sendGetTradesRequestAndReturnNodeResult(String pairs) {
         String uri = UriComponentsBuilder.fromUriString(env.getProperty("spring.http.url.trades"))
-                .queryParam("limit", i)
+                .queryParam("limit", 15)
                 .queryParam("pair", pairs)
                 .toUriString();
         return publicRestTemplate.getForObject(uri, JsonNode.class);
@@ -123,7 +123,7 @@ public class ExmoSendRequestsServiceImpl implements SendRequestsService {
                 .queryParam("pair", pair)
                 .queryParam("limit", 1)
                 .toUriString();
-        return publicRestTemplate.getForObject(uri, OrderBookEntity.class);
+        return jSonMappingService.mapToOrderBookEntity(privateRestTemplate.getForObject(uri, JsonNode.class));
     }
 
     @Override
