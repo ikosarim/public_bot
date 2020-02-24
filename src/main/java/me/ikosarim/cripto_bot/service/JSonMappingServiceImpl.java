@@ -20,7 +20,7 @@ import static org.springframework.data.util.StreamUtils.createStreamFromIterator
 
 @Slf4j
 @Service
-public class ExmoJSonMappingServiceImpl implements JSonMappingService {
+public class JSonMappingServiceImpl implements JSonMappingService {
 
     @Override
     public Map<String, TradeObject> returnInitDataToTradeInMap(JsonNode node, CurrencyPairList pairList) {

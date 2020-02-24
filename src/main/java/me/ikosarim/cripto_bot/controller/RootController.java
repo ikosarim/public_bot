@@ -1,7 +1,6 @@
 package me.ikosarim.cripto_bot.controller;
 
 import me.ikosarim.cripto_bot.init.WorkTaskController;
-import me.ikosarim.cripto_bot.tasks.ScalpingAlgorithmTask;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
