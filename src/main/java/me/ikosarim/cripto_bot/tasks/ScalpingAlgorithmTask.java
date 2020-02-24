@@ -99,6 +99,10 @@ public class ScalpingAlgorithmTask implements Runnable {
     private void workInMainCorridor(TradeObject tradeObject, Double actualPrice) {
         tradeObject.setActualTradePrice(actualPrice);
         log.info("Actual price for pair - " + tradeObject.getPairName() + ", - " + actualPrice);
+        cancelAndRemoveScalpingTask(tradeObject);
+    }
+
+    private void cancelAndRemoveScalpingTask(TradeObject tradeObject) {
         ScheduledFuture<ReplaceOrderInGlassTask> taskFuture = scheduledFutureMap.get(tradeObject.getPairName());
         if (taskFuture != null) {
             log.info("Need to cancel scalping task, name - " + tradeObject.getPairName());
@@ -155,6 +159,8 @@ public class ScalpingAlgorithmTask implements Runnable {
             if (!alreadyExecuteTask) {
                 createOrderForTrade(tradeObject, actualPrice, tradeType, "", isSell, isBuy);
             }
+        } else {
+            cancelAndRemoveScalpingTask(tradeObject);
         }
         tradeObject.setActualTradePrice(actualPrice);
         log.info("Actual price for pair - " + tradeObject.getPairName() + ", - " + actualPrice);
