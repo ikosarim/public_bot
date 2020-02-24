@@ -26,4 +26,5 @@ public class UserTradeEntity {
     private double price;
     @JsonProperty(value = "amount")
     private double amount;
+    
 }

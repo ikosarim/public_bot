@@ -6,7 +6,6 @@ import me.ikosarim.cripto_bot.json_model.PairSettingEntity;
 import me.ikosarim.cripto_bot.json_model.UserInfoEntity;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
 import me.ikosarim.cripto_bot.tasks.ReplaceOrderInGlassTask;
-import me.ikosarim.cripto_bot.tasks.ScalpingAlgorithmTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -27,7 +27,7 @@ import static java.util.Arrays.asList;
 @Slf4j
 @Service
 @PropertySource("application.properties")
-public class ExmoSendRequestsServiceImpl implements SendRequestsService {
+public class SendRequestsServiceImpl implements SendRequestsService {
 
     private Map<String, String> userPrivateInfoMap = new HashMap<>();
 

@@ -1,6 +1,6 @@
 package servicesTests;
 
-import me.ikosarim.cripto_bot.service.ExmoSendRequestsServiceImpl;
+import me.ikosarim.cripto_bot.service.SendRequestsServiceImpl;
 import me.ikosarim.cripto_bot.service.SendRequestsService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,7 +23,7 @@ public class SendRequestsServiceTests {
 
         @Bean(name = "testRequestService")
         SendRequestsService sendRequestsService() {
-            return new ExmoSendRequestsServiceImpl();
+            return new SendRequestsServiceImpl();
         }
 
         @Bean
