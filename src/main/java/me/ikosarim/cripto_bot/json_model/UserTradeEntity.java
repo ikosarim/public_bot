@@ -10,6 +10,7 @@ import lombok.*;
 @Builder
 public class UserTradeEntity {
 
+    
     @JsonProperty(value = "trade_id")
     private Long tradeId;
     @JsonProperty(value = "date")
@@ -26,5 +27,4 @@ public class UserTradeEntity {
     private double price;
     @JsonProperty(value = "amount")
     private double amount;
-    
 }
